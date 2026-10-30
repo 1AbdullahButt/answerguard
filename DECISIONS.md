@@ -82,3 +82,20 @@ through `decide()` with zero draft claims (→ ALLOW `NO_POLICY_CLAIM`). No AI c
 While QA reviewed the Phase 0 tests, the orchestrator drafted the Phase 1 engine in `lib/engine/` (files QA was not reviewing).
 To keep the Phase 0 evidence honest, the stubs were temporarily restored to capture the failing test run, then the engine was
 put back. Phase 1 still goes through its own tester run and independent QA review.
+
+### D-012 · Phase 1 QA fixes (spec gaps closed conservatively)
+1. **D1 also fires when every candidate is SCOPE_UNRESOLVED** (unknown rail, only rail-specific rules apply). SPEC's D1
+   needs two differing values; without this, D4 would set V from an instant-only rule on a ticket whose rail is unknown
+   and HOLD with a timeline. Escalating is the conservative reading of "escalate when unsure" (SPEC §17).
+2. **Duplicate claims collapse**: candidates from the same source with the same value count once (the one carrying a
+   supersedes sentence wins), so an extractor that splits one doc into two claims can't make it fail D5/D6 "exactly one".
+   Claims from the same source with *different* values still conflict: a source can't supersede its own claim (D5 condition 3 fails).
+3. **A source whose every extracted claim fails quote validation counts as unread** (`ALL_CLAIMS_REJECTED` → the
+   SOURCE_UNREAD cap), mirroring D0a on the draft side. "The AI found nothing usable" is never treated as "safe".
+4. **A draft claim with no value** records D1/D2 as skipped and D3 fired ("unsupported"), so the trace never jumps.
+5. **Top-level trace**: `CheckResult.trace` (extension) holds D0a/D0b/D0c/D0d, the SOURCE_UNREAD cap and the roll-up.
+6. **AI safe replies**: accepted only when the recheck is ALLOW, or CAUTION for WEAK_BASIS / CHANGE_SIGNALLED /
+   SOURCE_UNREAD. A CAUTION meaning "couldn't understand the reply" (EXTRACTION_GAP, OUTSIDE_COVERAGE, …) falls back to
+   the template. SPEC §6.7's "ALLOW or CAUTION" is the outer bound.
+7. Provider/API errors are listed as `EXTRACTION_ERROR`; `INVALID_OUTPUT` is reserved for output that failed validation.
+8. D5's fired trace lists conditions 1–4 explicitly; condition 2 (supersedes quote verbatim) is re-checked in the engine.

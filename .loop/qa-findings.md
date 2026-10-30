@@ -1,38 +1,52 @@
-# QA findings · Phase 0 (pre-lock test review) · 2026-10-30T21:45:00Z
+# QA findings · Phase 1 (re-review) · 2026-10-30T23:10:00+05:00
 
 ## Commands run
-- `pnpm typecheck` → exit 0 (tsc --noEmit, tsconfig includes `**/*.ts`, so tests/ are type-checked)
-- `pnpm test` → exit 1. `Test Files 9 failed (9)`, `Tests 34 failed | 25 passed (59)`
-- `pnpm exec vitest run --reporter=verbose` → every failure's error, grouped:
-  - `Error: NOT_IMPLEMENTED: runCheck` (15 groups), `handleCheck` (4), `cacheKey` (4), `createAiCache` (2) = 34 failed tests
-  - No import, syntax, type or assertion errors. The 25 passes are the T1 fixture-sanity block (body matches seed/variant, quotes and supersedes.quote are verbatim, draft spans verbatim) plus the T5 sanity check
-- Node byte-compare of SPEC Appendix A code blocks vs `data/seed/docs/*.md` → DOC-101, DOC-103, SRC-202, DOC-104, DOC-105 all BYTE-EQUAL, LF only, single trailing `\n`
-- `git worktree list` → `D:/Project/slite 8a96403 [main]` (only entry)
+- `pnpm typecheck` → exit 0
+- `pnpm test` → exit 1. `Test Files 1 failed | 10 passed (11)`, `Tests 13 failed | 73 passed (86)`.
+  All 13 failures are in `tests/ai/cache-identity.test.ts` (`NOT_IMPLEMENTED: cacheKey` / `createAiCache`), which is expected until Phase 2.
+  T1–T8, `lib/engine/decide.test.ts` (including "QA Phase 1 fixes") and the new `lib/check/runCheck.test.ts` all pass.
+- `grep -rniE "groq|anthropic|openai|fetch\(" lib app` → no hits. `lib/ai/` holds only the cache stub.
+- `pnpm build` → exit 0. Then `pnpm start -p 3123` (stopped afterwards; nothing is listening on 3123):
+  - `GET /api/seed?role=support_agent` → 200. IDs: DOC-101 DOC-103 DOC-104 SRC-202, with no DOC-105, "Fraud Hold", FR-HOLD or CMP-7
+  - `GET /api/seed?role=ops_lead` → includes DOC-105
+  - `POST /api/check` (TCK-9001, support_agent, with a DOC-105 override) → 200 `AI_UNAVAILABLE`/`EXTRACTION_FAILED`, `trace: [D0a fired …]`, rejected reason `EXTRACTION_ERROR`. DOC-105 leak count: 0
+  - `POST /api/send` (same body, acknowledged) → 503
+- Probe script rerun (scratchpad, `npx tsx`, fixture deps):
+  - T1: HOLD. The D5 fired detail lists conditions 1), 2) (verbatim supersedes quote), 3) and 4).
+  - Duplicate DOC-103 claims, both with supersedes: HOLD via D5. Before the fix this was ESCALATE.
+  - S undated, target dated: condition-4 detail now reads "DOC-103 states no effective date, so dates can't be compared …", which is correct.
+  - Unknown rail with DOC-101 deleted: ESCALATE/SCOPE_UNKNOWN ("every applicable rule is rail-specific"). Before the fix this was HOLD.
+  - Unknown rail with DOC-103 deleted: ALLOW via DOC-101 (any scope).
+  - HOLD headline: "Hold: instant-rail transfers reverse in 1 business day …"
+  - Value-less draft claim: D0, then D1/D2 skipped, D3 fired, then D4–D11b skipped.
+  - Top-level trace:
+    - no claims, unread source: `D0a pass, D0b pass, D0d fired, Cap fired` → CAUTION SOURCE_UNREAD
+    - D0b case: `D0a pass, D0b fired`
+    - D0c case: `D0a pass, D0b pass, D0c fired`
+    - every draft claim rejected: `D0a fired`
+  - Every DOC-103 quote rejected: `ALL_CLAIMS_REJECTED`, then the SOURCE_UNREAD cap turns ALLOW into CAUTION.
+  - AI safe reply whose recheck is EXTRACTION_GAP: rejected, and the template is used (recheck ALLOW).
+  - Skip lists use D11a/D11b everywhere.
+  - D0c detail: `"within 24 hours" makes a claim (24 hours) outside …`
+  - Support-agent override for DOC-105: the extractSource spy never saw DOC-105 and the response does not mention it.
+  - Send with a draft-extraction error → 503. Send that comes back ESCALATE → 409.
+- `git worktree list` → `D:/Project/slite 3ff0f35 [main]` (only entry)
 
-## Review summary (hand trace, decisionTime 2026-10-30T12:00Z, D-002 defaults)
-- T1 TCK-9001: C = {DOC-101 any 4bd, DOC-103 instant 1bd}. D5: DOC-103 is a candidate that applies; supersedes.quote verbatim; targetText normalizes (D-002.6) to contain "outgoing transfers reversal sop"; DOC-101 has no effectiveFrom → V = 1bd. D9 → HOLD. No weakeners, so D11a doesn't fire. ✔
-- T2 TCK-9003: DOC-103 and SRC-202 (instant) don't apply; DOC-104 is excluded. D4 V = 4bd, D10 ALLOW. DOC-101 has no weakeners (updated 09-30 < verified 10-01). ✔
-- T3 TCK-9002: DOC-103 is SCOPE_UNRESOLVED (1) vs DOC-101 (4) → D1 ESCALATE SCOPE_UNKNOWN. The template regex matches §6.7 plus the §6.6.2 detector words. ✔
-- T4a: D4 V = 4 → ALLOW. SRC-202 is a PROPOSAL that applies (instant), and 1 ≠ 4 is an amount difference → D11b CHANGE_SIGNALLED. ✔
-- T4b (B3, verified): two `any` candidates disagree, no supersedes, no specific scope → D7 CONFLICT_UNRESOLVED. ✔
-- T4c (B5 2030-01-01 per D-007, SRC-202 deleted): DOC-103 is NOT_YET_EFFECTIVE, DOC-101 governs at 4 → ALLOW → D11b CHANGE_SIGNALLED. ✔
-- T4d (draft save): DOC-103 gets EDITED_AFTER_VERIFICATION (10-29 > 10-26). D5 still sets V = 1 → HOLD → D11a WEAK_BASIS. ✔
-- B1 (verified): updatedAt == verifiedAt, so no weakener. D5 V = 2 → HOLD, and the template reads "2 business days". B2: pending_approval → PROPOSAL → D11b. B6: DOC-101 weakened → D11a. B7: D5 V = 2 → D11a. ✔
-- T5: the forbidden tokens and ≥12-char lines follow D-002.7. A spy on extractSource covers the AI path, the hostile `visibility` override is checked, and an ops_lead control stops a trivial pass. ✔
-- T6: draft A 1bd → D5 V = 1bd, D10 ALLOW. SRC-202 has amount 1 (calendar), so it doesn't contradict per D-002.1 and D11b doesn't fire. Send B → HOLD 409, with the forged `result`/`checkHash` ignored. ✔
-- T7: the seed DOC-104 fixture deliberately extracts the injected line as an in_force reversal_window claim (adversarial), so the "never CANDIDATE" assertion means something. Flagged outdated → EXCLUDED for all 3 tickets. ✔
-- T8a: zero claims and the detector matches "4 business days" → D0b. T8b: D0a and send 503 (§6.8). T8c: without DOC-103 it would be ALLOW; the SOURCE_UNREAD cap makes it exactly CAUTION. ✔
-- Fixtures vs SPEC 6.2 / brief §5: "all rails" → any; "instant-rail transfers only" → instant; B3 → any (title isn't scope); "5-7 days" → 5..7 calendar_days; SRC-202 "1 day" → calendar_days, proposed; B2 → pending_approval, effectiveFrom null. ✔
-- Seed metadata matches Appendix A: kinds, verification, dates, owners and active flags, flaggedOutdated and flagNote, visibility. SPEC gives no `updatedAt` for DOC-105 or SRC-202; the seed uses 2026-10-10 (= verifiedAt, so no weakener) and 2026-10-24 (the Slack date), both harmless. ✔
-- Cache identity covers task, promptVersion, schemaVersion, provider (D-001), model, inputText, sourceKind and governing {value, quote, decision}. It also checks key-order independence, the save/load round trip and refusal of a tampered file (§10). ✔
+## Previous findings (all 11 resolved)
+1 (major) D5 condition 2 in the trace: fixed and re-checked in the engine (resolve.ts:49-53, 84-88).
+2: fixed (resolve.ts:68-78).
+3: fixed (decide.ts:191-200, 274-276; resolve.ts:54).
+4: fixed (decide.ts:299-311, headline decide.ts:444-448), D-012.1.
+5: fixed (decide.ts:283-293).
+6: fixed (top-level `CheckResult.trace`), D-012.5.
+7: fixed.
+8: fixed (runCheck.ts:153-156), D-012.3.
+9: fixed (runCheck.ts:164).
+10: fixed (runCheck.ts:209-211), D-012.6.
+11: fixed (decide.ts:212).
 
 ## Findings
-- [severity: minor] tests/engine/t4-recency.test.ts:52-54 · expected (SPEC §14 T4d): "V = 1 shown in the trace" · actual: requires a `D5` trace entry with outcome `fired` whose `detail` contains the literal "1 business day". An engine that writes V as "V = 1 (business_days)", or puts V in a separate trace entry, would fail. Satisfiable (put the governing valueText in the D5 detail) but tighter than SPEC. Optional loosening: accept any trace entry whose detail matches `/\b1\b/` and mentions D5/V. · SPEC §14 T4(d), §7.3
-- [severity: minor] tests/ai/cache-identity.test.ts:51-55 · expected (SPEC §10): sourceKind is part of the identity "for source_extraction", and V/quote/decision "for safe_reply" · actual: the variants add `sourceKind` and `governing` to a `draft_extraction` identity and expect the key to change. An implementation that hashes only the task-relevant fields would fail even though it follows SPEC. Consistent with the Phase 0 contract in lib/ai/cache.ts ("sha256 of a canonical JSON of the identity"), so hashing every present field passes. Over-inclusion is never unsafe. · SPEC §10
-- [severity: minor] tests/ai/cache-identity.test.ts:84-90 · expected (SPEC §10): "Each cache file stores its full identity next to the output" · actual: the save test checks the file exists and round-trips, but not that the JSON contains `identity` equal to the input identity. Test (5) covers this only indirectly. Coverage gap, not a wrong assertion. · SPEC §10
-- [severity: minor] tests/engine/t4-recency.test.ts:67 · expected (Appendix B B1): "suggestion says 2" · actual: requires "2 business days". Consistent with the HOLD template "{V}" and with T1's "1 business day", and fixtureDeps has no suggestReply, so the template is always used. Acceptable. Noted so the builder formats V as "<n> business day(s)". · SPEC App. B, §6.7
-- [severity: minor] tests/helpers/fixtures.ts:157-162 (fixtureDeps) · note: extractDraft throws FIXTURE_MISSING for any draft without a fixture. Recheck of the HOLD and ESCALATE templates must therefore be deterministic, with no extractDraft call. This matches D-005 (HOLD) and PLAN Phase 1 (ESCALATE: assertion only), but D-005 does not mention the ESCALATE template. Consider adding one line to DECISIONS.md. No test change needed. · SPEC §6.7, D-005
-
-No blocker or major findings. Every T1–T8 assertion follows from SPEC rules S, A, D0–D11 plus the D-002/D-004/D-005/D-007 defaults using the committed fixtures. None asserts headline text or other incidental wording beyond the T4d trace detail noted above. Gate items proven: 9 test files run, all 34 failures are NOT_IMPLEMENTED, typecheck clean, seed byte-exact, single worktree. (Canary and lock creation happen after this approval and are not part of this review.)
+- [severity: minor] lib/engine/resolve.ts:54 · expected: the D-012 decision recorded in DECISIONS · actual: D5 targets now skip every candidate from S's own source, including ones with a *different* value. A doc that contradicts itself would therefore have its own conflicting claim ignored. In practice this is harmless, because D-012.2 only documents deduping claims with the same value. Suggest adding a sentence to D-012.2. · SPEC §6.6.1 cond. 3
+- [severity: minor] lib/engine/resolve.ts:85 · cosmetic: the condition-2 detail ends with `…transfers.".` (double punctuation when the quote ends with a period).
 
 ## VERDICT: APPROVED

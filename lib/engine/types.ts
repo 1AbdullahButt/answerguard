@@ -147,7 +147,7 @@ export interface ClaimResult {
 
 export interface RejectedExtraction {
   sourceId: string; // the source ID, or "DRAFT"
-  reason: "QUOTE_NOT_FOUND" | "SPAN_NOT_FOUND" | "SUPERSEDES_QUOTE_NOT_FOUND" | "INVALID_OUTPUT";
+  reason: "QUOTE_NOT_FOUND" | "SPAN_NOT_FOUND" | "SUPERSEDES_QUOTE_NOT_FOUND" | "INVALID_OUTPUT" | "EXTRACTION_ERROR" | "ALL_CLAIMS_REJECTED";
   snippet: string;
 }
 
@@ -194,6 +194,8 @@ export interface CheckResult {
   reasonCode: ReasonCode;
   caps: Cap[];
   patternMatches: PatternMatch[];
+  /** Draft-level rules, caps and the overall roll-up (D-012.5). Per-claim rules live in claims[].trace. */
+  trace: TraceEntry[];
 }
 
 // ---- Orchestration seams (DECISIONS.md D-004) --------------------------------------------------
