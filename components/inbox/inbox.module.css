@@ -182,8 +182,11 @@
   margin-left: auto;
   align-self: center;
 }
+/* Stale result: keep full text contrast (AA); mark staleness with a dashed outline instead of fading. */
 .tStale {
-  opacity: 0.55;
+  outline: 1px dashed var(--muted);
+  outline-offset: 2px;
+  border-radius: 999px;
 }
 
 /* ---------- thread ---------- */

@@ -153,7 +153,7 @@ export function ReasoningTab({
             <span className={s.line} />
           </div>
           {claim.evidence.length > 0 ? (
-            <section className={s.card} aria-label={`Evidence for claim ${i + 1}`}>
+            <section className={s.card} aria-label={`Evidence for claim ${i + 1}`} data-tour={i === 0 ? "evidence" : undefined}>
               {governingFirst(claim).map((ev) => (
                 <EvidenceRow
                   key={ev.claim.claimId}
@@ -175,7 +175,7 @@ export function ReasoningTab({
             <span className={s.line} />
             <RuleLabel />
           </div>
-          <section className={s.card} aria-label={`Rule trace for claim ${i + 1}`}>
+          <section className={s.card} aria-label={`Rule trace for claim ${i + 1}`} data-tour={i === 0 ? "trace" : undefined}>
             <RuleTrace entries={claim.trace} label={`Rules for claim ${i + 1}`} />
           </section>
         </div>

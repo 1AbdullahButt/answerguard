@@ -12,8 +12,12 @@ import { ReasoningTab } from "@/components/panel/ReasoningTab";
 import { SourcesTab } from "@/components/panel/SourcesTab";
 import { ImpactTab } from "@/components/panel/ImpactTab";
 import { TopBar } from "./TopBar";
+import { GuidedTour, type TourState } from "@/components/tour/GuidedTour";
+import { readJson, writeJson } from "@/lib/client/storage";
 import inbox from "@/components/inbox/inbox.module.css";
 import s from "./shell.module.css";
+
+const TOUR_SEEN_KEY = "answerguard.tour.seen.v1";
 
 function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
@@ -46,7 +50,10 @@ function ResetDialog({ edited, onCancel, onConfirm }: { edited: number; onCancel
         aria-labelledby="reset-title"
         aria-describedby="reset-desc"
         onKeyDown={(e) => {
-          if (e.key === "Escape") onCancel();
+          if (e.key === "Escape") {
+            e.preventDefault(); // handled here: the guided tour must not close too
+            onCancel();
+          }
           if (e.key === "Tab") {
             const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("button"));
             const first = items[0];
@@ -85,6 +92,9 @@ export function App() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [sheetFull, setSheetFull] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
+  const [tour, setTour] = useState<TourState | null>(null);
+  const tourBtnRef = useRef<HTMLButtonElement>(null);
+  const tourReturnRef = useRef<HTMLElement | null>(null);
   const dismissRef = useRef(actions.dismissToast);
   dismissRef.current = actions.dismissToast;
 
@@ -112,6 +122,37 @@ export function App() {
     const t = window.setTimeout(dismissRef.current, 4000);
     return () => window.clearTimeout(t);
   }, [ag.toast]);
+
+  // Guided tour: offered once on first visit, never to automated browsers (navigator.webdriver).
+  const seedReady = Boolean(ag.seed);
+  useEffect(() => {
+    if (!seedReady) return;
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
+    if (readJson<boolean>(TOUR_SEEN_KEY, false)) return;
+    writeJson(TOUR_SEEN_KEY, true);
+    tourReturnRef.current = tourBtnRef.current;
+    setTour({ mode: "offer", step: 0 });
+  }, [seedReady]);
+
+  const startTour = useCallback(() => {
+    writeJson(TOUR_SEEN_KEY, true);
+    setTour({ mode: "tour", step: 0 });
+  }, []);
+
+  const toggleTour = useCallback(() => {
+    if (tour) {
+      setTour(null);
+      return;
+    }
+    tourReturnRef.current = tourBtnRef.current;
+    startTour();
+  }, [tour, startTour]);
+
+  const closeTour = useCallback(() => {
+    setTour(null);
+    const back = tourReturnRef.current;
+    (back && document.contains(back) ? back : tourBtnRef.current)?.focus();
+  }, []);
 
   const ticket = ag.ticket;
 
@@ -162,7 +203,15 @@ export function App() {
 
   return (
     <div className={s.app}>
-      <TopBar role={ag.role} onRole={(r) => void actions.switchRole(r)} onReset={() => setConfirmReset(true)} ai={ag.lastAi} />
+      <TopBar
+        ref={tourBtnRef}
+        role={ag.role}
+        onRole={(r) => void actions.switchRole(r)}
+        onReset={() => setConfirmReset(true)}
+        onTour={toggleTour}
+        tourOpen={tour !== null}
+        ai={ag.lastAi}
+      />
       <div className={cx(s.main, ag.mobileView === "list" ? inbox.viewList : inbox.viewThread)}>
         {ag.seedError && !ag.seed ? (
           <div className={s.seedError} role="alert" style={{ gridColumn: "1 / -1" }}>
@@ -231,6 +280,16 @@ export function App() {
             <X aria-hidden="true" />
           </button>
         </div>
+      ) : null}
+      {tour ? (
+        <GuidedTour
+          state={tour}
+          ag={ag}
+          overlay={overlay}
+          onStep={(step) => setTour({ mode: "tour", step })}
+          onStart={startTour}
+          onClose={closeTour}
+        />
       ) : null}
       {confirmReset ? (
         <ResetDialog

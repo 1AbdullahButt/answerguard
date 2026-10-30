@@ -277,3 +277,29 @@ D:/Project/slite 20d9dfd [main]
 ```
 
 GATE: PASSED
+
+## Phase 4
+**Pre-deploy work (QA APPROVED; the Phase 4 gate is the SPEC §18 check against the deployed URL, still to come):**
+- Guided tour (5 steps, following SPEC §16; skippable; keyboard accessible; bottom card on phones), `components/tour/`, D-023.
+- README: problem, mermaid architecture, AI vs rules, tests, eval numbers, limitations, what not to claim, and `docs/demo.gif` (19 s, recorded by `scripts/record-demo.ts`).
+- CI runs the e2e test (`.github/workflows/ci.yml`). The secret scan now covers Gemini keys.
+- QA loop: the first review returned CHANGES_REQUIRED (2 major: stale-pill contrast; scan missed Gemini keys). Both were fixed (D-024). The re-review came back APPROVED; its minor (Esc closing the tour from other dialogs) was fixed afterwards and verified in a browser.
+
+**Evidence (final pre-deploy run):**
+```
+PASS  Esc in Reset dialog: dialog closed
+PASS  Esc in Reset dialog: tour still open
+PASS  Esc on persona tooltip: tour still open
+PASS  Esc in the tour itself: tour closed
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+  ok 1 [chromium] › e2e\demo.spec.ts:8:5 › wrong draft → HOLD → blocked send → use safe reply → sent → Impact shows 1 intercept (2.4s)
+  1 passed (51.6s)
+ESC_EXIT=0
+stale       1440px  axe: none
+stale       1024px  axe: none
+stale        390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none.
+```
+
+Status: waiting for deploy setup (`.loop/await-human.md`).

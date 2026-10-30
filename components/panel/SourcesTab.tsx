@@ -95,6 +95,7 @@ export function SourcesTab({
             key={src.id}
             className={s.card}
             aria-label={src.title}
+            data-tour={`source-${src.id}`}
             ref={(el) => {
               rowRefs.current[src.id] = el as HTMLDivElement | null;
             }}

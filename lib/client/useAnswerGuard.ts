@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CheckResult, Rail, Role, Source, Ticket } from "@/lib/engine/types";
 import { mergeOverrides } from "@/lib/workspace/merge";
+import { doc103Variant } from "@/lib/workspace/variantBodies";
 import { ApiError, fetchSeed, postCheck, postSend, type CheckRequest } from "./api";
 import {
   clearMetrics,
@@ -297,6 +298,8 @@ export function useAnswerGuard() {
   const setDraft = useCallback((text: string) => {
     const id = ref.current.selectedId;
     if (!id) return;
+    // Keep the ref in step so an immediate follow-up (guided tour: use safe reply, then send) sees the new text.
+    ref.current.drafts = { ...ref.current.drafts, [id]: text };
     setDrafts((d) => ({ ...d, [id]: text }));
     setSendStates((s) => (s[id] && s[id]?.kind !== "idle" && s[id]?.kind !== "sending" ? { ...s, [id]: { kind: "idle" } } : s));
     setAcks((a) => (a[id] ? { ...a, [id]: false } : a));
@@ -317,6 +320,26 @@ export function useAnswerGuard() {
   const selectTicket = useCallback((id: string) => {
     setSelectedId(id);
     setMobileView("thread");
+  }, []);
+
+  /**
+   * Guided tour: open a ticket with its seed rail and (optionally) a given draft, synchronously enough that a
+   * check or send issued right after uses them.
+   */
+  const prepareTicket = useCallback((id: string, draft?: string) => {
+    const t = ref.current.seed?.tickets.find((x) => x.id === id);
+    if (!t) return;
+    ref.current.selectedId = id;
+    ref.current.rails = { ...ref.current.rails, [id]: t.rail };
+    setSelectedId(id);
+    setMobileView("thread");
+    setRails((r) => ({ ...r, [id]: t.rail }));
+    if (draft !== undefined) {
+      ref.current.drafts = { ...ref.current.drafts, [id]: draft };
+      setDrafts((d) => ({ ...d, [id]: draft }));
+      setSendStates((st) => (st[id] && st[id]?.kind !== "sending" ? { ...st, [id]: { kind: "idle" } } : st));
+      setAcks((a) => (a[id] ? { ...a, [id]: false } : a));
+    }
   }, []);
 
   const applySafeReply = useCallback(() => {
@@ -383,6 +406,27 @@ export function useAnswerGuard() {
     },
     [commitOverrides, runCheck],
   );
+
+  /**
+   * Guided tour, SPEC §16 step 5: Appendix B variant B7 = DOC-103 "1 business day" → "2 business days" saved with
+   * Save draft. The body is the exact seed replacement (lib/workspace/variantBodies.ts), so saved responses replay.
+   */
+  const applyB7 = useCallback(() => {
+    // Always from the seed version (v1, verified Oct 26), exactly like variantOverrides("B7"): v2, updatedAt now.
+    const seedDoc = ref.current.seed?.sources.find((x) => x.id === "DOC-103");
+    if (!seedDoc) return false;
+    saveSource(
+      seedDoc,
+      {
+        body: doc103Variant.B1(seedDoc.body),
+        verification: seedDoc.verification,
+        flaggedOutdated: seedDoc.flaggedOutdated,
+        ownerActive: seedDoc.owner?.active ?? true,
+      },
+      "draft",
+    );
+    return true;
+  }, [saveSource]);
 
   const deleteSource = useCallback(
     (source: Source) => {
@@ -487,6 +531,8 @@ export function useAnswerGuard() {
       setRail,
       setAck,
       runCheck: () => runCheck(),
+      prepareTicket,
+      applyB7,
       send,
       applySafeReply,
       switchRole,

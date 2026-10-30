@@ -1,37 +1,33 @@
-# QA findings · Phase 3 (re-review) · 2026-10-30T18:46:19Z
+# QA findings · Phase 4 pre-deploy (re-review) · 2026-10-30T19:35:19Z
 
 ## Commands run
-- Before the run, no listeners on :3100 or :3200, and `git worktree list` → `D:/Project/slite 20d9dfd [main]` (only).
+- `git worktree list` → `D:/Project/slite e3f21ac [main]` (only). Before and after: no listeners on :3100/:3200. QA's :3200 server was stopped with `taskkill /T /F` on its shell PID, and netstat confirmed it was gone.
 - `pnpm typecheck` → exit 0
 - `pnpm test` → exit 0 · `Test Files 12 passed (12)` · `Tests 105 passed (105)`
-- `pnpm exec playwright test` (real config, cold build, nothing to reuse) → exit 0 · `ok 1 [chromium] › e2e\demo.spec.ts:8:5 › wrong draft → HOLD → blocked send → use safe reply → sent → Impact shows 1 intercept` · `1 passed (1.6m)`
-- `pnpm exec tsx scripts/ui-audit.ts --serve` → exit 0 · `Serious/critical axe violations: 0. Horizontal page scroll: none.` Nothing was listening on :3100 afterwards (the server was stopped). QA viewed the 390 screenshots (empty, check-hold) and reasoning-1440.
-- QA regression driver (scratchpad qa.cjs, own saved-mode server on :3200) → exit 0. Same results as the first review:
-  - The Check tab has no raw codes. The banner is one line. Inbox chips don't wrap.
-  - The Reasoning tab is complete (governing DOC-103 row now listed first), shows the real provider/model groq / openai/gpt-oss-120b, and has Raw JSON. "Open in Sources" lands on the quote.
-  - B1 → HOLD with 2 days in the suggestion. B7 → CAUTION (edited after verification). B2 → CAUTION. B3 → ESCALATE. B4 → CAUTION. An arbitrary source edit → CAUTION "Capped: DOC-103 unread".
-  - Toggles rerun the check. Reset clears both localStorage keys and the metrics.
-  - Send: 409 blocks and counts an intercept. CAUTION needs the ack, then sends. 503 → not sent, 0 intercepts.
-  - Drafts checked counts distinct pairs (2). False-alarm: n=1, n=2 "Not enough…", then n=3 "33%".
-  - Support agent: 0 DOC-105 or title hits on every tab, and the seed responses are clean. Ops lead sees DOC-105.
-  - The Sources editor has no overflow at 390/1024/1440; Cancel, the counter and "Flagged outdated" are visible.
-  - Console: only the browser's resource lines for the deliberate 409/503.
-- QA fix-check driver (scratchpad fixes.cjs) at 390/1024/1440 → exit 0:
-  - Footer: `footerClipped:false, footerInView:true` at all widths. At 390 it wraps to two lines with the full "…not affiliated with Slite".
-  - Top bar at 390: the mark is visible. The badge is not clipped and reads Idle / Saved / Paused / AI off. aria-label is complete ("AI mode: Saved AI response", "AI mode: Live AI paused, showing saved responses", "AI mode: AI unavailable"). At 1024/1440 the badge shows full text. No horizontal scroll.
-  - AI-unavailable banner: "Sending will be refused until this draft can be checked. Retry, or rewrite it without the policy claim. Not counted as an intercept."
-  - Toast: top 60px (under the 48px header), does not overlap Check answer or Send, lasts ~4.0s.
+- `pnpm exec playwright test` (cold, saved mode) → exit 0 · `ok 1 … Impact shows 1 intercept` · `1 passed (1.8m)`
+- `pnpm exec tsx scripts/ui-audit.ts --serve` → exit 0 · `stale 1440/1024/390 axe: none` · `Serious/critical axe violations: 0. Horizontal page scroll: none.` Its server was gone afterwards.
+- precommit-scan, throwaway repo with random fake keys generated at runtime. One file staged at a time:
+  - Blocked (exit 1): raw `AIza…` in .ts; `GEMINI_API_KEY=AIza…` in .md; `const GEMINI_API_KEY = "<48 hex>"`; `GROQ_API_KEY=<hex>`; `UPSTASH_REDIS_REST_TOKEN=<hex>`; `DB_PASSWORD: <hex>`.
+  - Clean (exit 0): empty `GEMINI_API_KEY=`/`GROQ_API_KEY=`; `process.env.GEMINI_API_KEY`; `GROQ_MODEL=openai/gpt-oss-120b`; the full .env.example; a short `SOME_TOKEN=abc123`.
+  - False-positive check: all 197 committable files staged in a throwaway repo → `precommit-scan: clean (197 staged files checked)`, so the real commit won't be falsely blocked.
+- QA tour driver (scratchpad tour2.cjs / esc.cjs, saved mode, :3200):
+  - Fix 3, Back → Next: apply B7 in step 5 → Back → Next fires 0 checks on entry. The tour shows "DOC-103 is already edited in this workspace, so the before/after won't show." with a visible "Restore DOC-103 to its seed version" button and Apply hidden. Restore → 1 check, overrides `{}`, Apply visible. Apply → "Hold | Caution | Changed because DOC-103 v2 saved as a draft".
+  - Fix 3, pre-edited DOC-103 (B1 Save and verify before the tour): step 5 shows the same message and the Restore button. Minor caveat: step 1 still narrates "1 business day" while the banner says "Hold … 2 business days", which is accurate for that workspace.
+  - Fix 4, Esc in the Reset dialog with the tour open: before Esc, tour open = 1, reset dialog = 1, focus on Cancel. After Esc, **tour open = 0**, reset dialog = 0. Control: closing the dialog with Cancel keeps the tour open (1).
+  - Fix 4, persona tooltip: focus on "About personas", tooltip visible/1, tour open = 1. After Esc, **tour open = 0**, tooltip hidden.
+  - 390 top bar: `markVisible: true, tourBtn: true, badge "Idle", hScroll: false, overflowHeader: false`. The screenshot shows mark · persona switch · info · tour · reset · badge.
+  - Stale pill: after check → safe reply → Send, axe at 1440 shows none. The screenshot shows the "Allow" pill at full contrast with a dashed outline.
+  - Console errors: none.
+- README.md:83: "a provider spend limit on a dedicated demo key (its behaviour, hard stop vs alert, is confirmed and recorded at deploy)".
 
 ## Findings
-- [severity: minor] components/panel/DecisionBanner.tsx:74 · the AI-unavailable banner now says "Retry, or rewrite it without the policy claim." twice (the engine headline already ends with that sentence) · suggest dropping it from the meta line. Copy only.
-- [severity: minor] 390px · with the bottom sheet open at its first detent, it covers the composer's Check answer and Send, so the user must close it (× or Esc) to recheck. This matches DESIGN.md §3 (sheet over the thread). Noted for Phase 4 phone smoke-testing only.
+- [severity: minor] components/tour/GuidedTour.tsx:211-221 · expected (fix 4 / D-023): Esc inside the Reset dialog or on the persona tooltip closes only that control · actual: it closes the tour too (see the measurements above). Cause: React runs the dialog's or tooltip's own Esc handler (App.tsx:53 `onCancel`, RoleSwitch.tsx:68 `setTip(false)`) and flushes that update *before* the native event reaches the tour's `document` listener. By then the Reset dialog is unmounted and focus is no longer inside it. For the tooltip, focus is on the "About personas" button, which is never inside `[role="tooltip"]`. So `inOtherDialog` is false both times. Fix: have those handlers call `e.preventDefault()` (the listener already checks `e.defaultPrevented`), or register the tour listener in the capture phase and record the target before React handles it. The impact is low: the tour can be reopened and nothing is lost.
+- [severity: minor] carried over · CI depends on the still-untracked lib/workspace/variantBodies.ts, components/tour/*, docs/demo.gif and scripts/record-demo.ts. Commit them together with the modified files, as noted.
 
-All six previous findings are verified fixed:
-1. Footer wraps at 390.
-2. Top bar keeps the mark and shows a readable short badge.
-3. Banner copy matches behaviour.
-4. Governing evidence row comes first.
-5. Toast moved and shortened.
-6. No stray servers; the e2e built fresh.
+Previous majors verified fixed:
+1. Stale pill contrast: no opacity, dashed outline, axe clean in the new audit state and in the real send flow.
+2. Secret scan: Gemini and env-style patterns block every test case, with no false positives on the repo.
+
+Fix 3 is verified for both scenarios, fix 5 (390 top bar) is verified, and fix 6 (README spend-limit wording) is verified.
 
 ## VERDICT: APPROVED

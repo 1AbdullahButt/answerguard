@@ -226,3 +226,40 @@ recheck shows "Rechecked · Caution" with its reason; a Rail change marks the re
 On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so the marker named a
    dead PID and never applied. The helper now has `run "<what>" -- <command>`, which records its own PID, runs the command,
    waits, and removes the marker on exit. The approved rule (running PID + under 30 minutes) is unchanged.
+
+### D-023 · Guided demo tour (Phase 4, SPEC §15 P1, §16)
+1. **Five steps following SPEC §16:** (1) Catch: TCK-9001, canonical draft, Check → Hold, anchored to the Decision banner;
+   (2) Why: Reasoning tab, anchored to the claim's evidence card (DOC-103 quote, governs via D5); (3) Recover: buttons
+   "Try to send the wrong draft" (409, one intercept) and "Use the safe reply and send it" (200), anchored to the composer;
+   (4) Ambiguity: TCK-9002 → Escalate, anchored to the holding reply; (5) Live proof: Sources tab, button "Apply the edit
+   (2 business days, Save draft)" applies B7 and reruns → Caution "edited after verification"; the copy states that Save and verify
+   gives Hold at 2 days. Step 5 first reruns the canonical check so the change chip reads "Hold → Caution".
+2. **Driving the app.** Steps 1, 2, 4 and 5 set up on entry (select ticket with its seed rail, fill the canonical draft, check,
+   switch tab). The two side-effecting moments (sending, editing a source) need an explicit button, so the tour never sends or
+   edits behind the user's back. New hook actions: `prepareTicket(id, draft?)` and `applyB7()`; `setDraft` also updates the state
+   ref so an immediate send uses the new text.
+3. **Exact variant bodies.** The Appendix B replacements moved to a pure module, `lib/workspace/variantBodies.ts`, used by both
+   `lib/workspace/variants.ts` (scripts) and the browser. B7 is always applied from the seed version (v1 → v2, updatedAt now,
+   verification untouched), identical to `variantOverrides("B7")`, so the saved responses replay.
+4. **Non-modal coach mark.** `role="dialog"` without `aria-modal`, named by the step title and described by its body, with a
+   visible "Step n of 5" counter. No scrim; a highlight ring (accent outline + halo) follows the anchor, which is scrolled into view
+   once per step. Placement: left of the anchor, else right, below or above. Under 700 px it is a bottom card above the footer,
+   flipped to the top when the anchor is in the lower half (the composer). Focus moves to the step title on open and on each step;
+   Skip, ×, Finish and Esc close it, and focus returns to the "Guided tour" button.
+5. **Offer once.** On first visit a small offer card ("Start tour" / "Not now") anchors to the top-bar "Guided tour" button;
+   `answerguard.tour.seen.v1` is stored via the try/catch storage wrapper as soon as it is offered or started. No auto-offer when
+   `navigator.webdriver` is true. Tour button and action labels ("Guided tour", "Start tour", "Next", "Back", "Skip tour",
+   "Try to send the wrong draft", "Use the safe reply and send it", …) don't collide with any UI-contract name, and the tour renders
+   no `status`, `alert`, `region` or `group` roles.
+6. **Phone top bar.** To fit the new button at 390 px, the decorative brand mark is hidden at ≤420 px and icon-only top-bar
+   buttons use tighter padding.
+
+### D-024 · Phase 4 pre-deploy QA fixes
+- Stale inbox pills keep full text contrast; staleness is a dashed outline + title + sr-only "(stale)" (axe serious → fixed).
+  `scripts/ui-audit.ts` gained a "stale" state so this stays covered.
+- `scripts/precommit-scan.mjs` also blocks Google/Gemini `AIza…` keys and env-style `NAME_API_KEY|_TOKEN|_SECRET|PASSWORD=value`
+  assignments; verified with runtime-generated fake keys in a throwaway repo (and no false positives on the real files).
+- Tour step 5 never replays over an existing DOC-103 edit; it offers a user-pressed "Restore DOC-103 to its seed version".
+- Esc closes only the innermost control: the Reset dialog and persona tooltip mark Esc as handled (`preventDefault`), and the
+  tour ignores handled events. Verified in a browser (4/4 cases).
+- The phone top bar keeps the product mark; the README states the spend limit is confirmed at deploy.

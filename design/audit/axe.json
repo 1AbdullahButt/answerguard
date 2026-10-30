@@ -25,6 +25,11 @@
     "violations": []
   },
   {
+    "state": "stale",
+    "width": 1440,
+    "violations": []
+  },
+  {
     "state": "escalate",
     "width": 1440,
     "violations": []
@@ -55,6 +60,11 @@
     "violations": []
   },
   {
+    "state": "stale",
+    "width": 1024,
+    "violations": []
+  },
+  {
     "state": "escalate",
     "width": 1024,
     "violations": []
@@ -81,6 +91,11 @@
   },
   {
     "state": "impact",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "stale",
     "width": 390,
     "violations": []
   },

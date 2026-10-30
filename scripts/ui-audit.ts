@@ -90,6 +90,14 @@ const states: Array<{ name: string; run: (page: Page) => Promise<void> }> = [
     },
   },
   {
+    // Editing the draft after a check makes the inbox pill stale (Phase 4 QA: it must keep AA contrast).
+    name: "stale",
+    run: async (page) => {
+      await checkHold(page);
+      await page.getByRole("textbox", { name: "Reply to customer" }).fill(`${DRAFT} Thanks!`);
+    },
+  },
+  {
     name: "escalate",
     run: async (page) => {
       await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Usman R\./ }).click();

@@ -65,7 +65,10 @@ export function RoleSwitch({ role, onChange }: { role: Role; onChange: (r: Role)
           onFocus={() => setTip(true)}
           onBlur={() => setTip(false)}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setTip(false);
+            if (e.key === "Escape" && tip) {
+              e.preventDefault(); // handled here: the guided tour must not close too
+              setTip(false);
+            }
           }}
           onClick={() => setTip((t) => !t)}
         >

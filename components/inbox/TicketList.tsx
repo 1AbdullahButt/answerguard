@@ -74,7 +74,7 @@ export function TicketList({
                   <span className={s.tTop}>
                     <span className={s.tName}>{t.customer}</span>
                     {res ? (
-                      <span className={cx(s.tPill, isStale(t.id) && s.tStale)}>
+                      <span className={cx(s.tPill, isStale(t.id) && s.tStale)} title={isStale(t.id) ? "Result is stale: the draft or rail changed since this check" : undefined}>
                         <StatusPill decision={res.result.decision} small />
                         {isStale(t.id) ? <span className="sr-only"> (stale)</span> : null}
                       </span>

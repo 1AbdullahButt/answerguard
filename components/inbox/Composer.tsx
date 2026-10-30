@@ -118,7 +118,7 @@ export function Composer({
   const hasSuggestion = blocked && sendState.result.suggestion !== null;
 
   return (
-    <div className={cx(s.composer, blockedTone === "hold" && s.composerBlocked, blockedTone === "esc" && s.composerEsc)}>
+    <div data-tour="composer" className={cx(s.composer, blockedTone === "hold" && s.composerBlocked, blockedTone === "esc" && s.composerEsc)}>
       <div className={s.cTabs}>
         <span className={s.cTabOn}>Reply</span>
         <span aria-hidden="true">Note</span>

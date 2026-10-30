@@ -37,6 +37,7 @@ export function DecisionBanner({
   return (
     <section
       aria-label="Decision"
+      data-tour="decision"
       aria-live="polite"
       className={cx(s.banner, TONE_CLASS[meta.tone], stale && s.stale, animate && s.bannerIn)}
     >

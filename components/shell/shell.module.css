@@ -273,6 +273,9 @@
   .resetLabel {
     display: none;
   }
+  .iconOnly {
+    padding: 0 7px !important;
+  }
   .brand b {
     display: none;
   }
@@ -298,6 +301,11 @@
   .modeWrap {
     min-width: 0;
     display: flex;
+  }
+  /* The product mark stays on phones (Phase 3 QA); the Guided tour button is already icon-only below 700 px. */
+  .topbar {
+    gap: 4px;
+    padding: 0 8px;
   }
 }
 @keyframes fade {

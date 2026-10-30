@@ -30,7 +30,7 @@ export function SafeReplyCard({
   const cautionReason = recheck === "CAUTION" ? cautionRecheckReason(result) : null;
 
   return (
-    <section className={s.card} aria-label="Safe reply">
+    <section className={s.card} aria-label="Safe reply" data-tour="safe-reply">
       <div className={s.cardH}>
         <Reply aria-hidden="true" />
         <h3>{holding ? "Holding reply" : "Safe reply"}</h3>

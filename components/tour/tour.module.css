@@ -1,0 +1,182 @@
+/* Guided tour: a calm, non-modal coach mark (DESIGN.md tokens). No scrim: the app stays usable underneath. */
+.ring {
+  position: fixed;
+  z-index: 70;
+  pointer-events: none;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 6px var(--accent-ring);
+  transition:
+    top 0.2s var(--ease),
+    left 0.2s var(--ease),
+    width 0.2s var(--ease),
+    height 0.2s var(--ease);
+}
+.card {
+  position: fixed;
+  z-index: 75;
+  width: 328px;
+  max-width: calc(100vw - 16px);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-3);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  transition:
+    top 0.2s var(--ease),
+    left 0.2s var(--ease);
+}
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.counter {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dots {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.dotOn {
+  background: var(--accent);
+}
+.close {
+  border: 0;
+  background: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r);
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+  flex: none;
+}
+.close:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.close svg {
+  width: 14px;
+  height: 14px;
+}
+.title {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  outline: none;
+}
+.body {
+  margin: 0;
+  color: #3f3f3d;
+  line-height: 1.5;
+}
+.body b {
+  color: var(--text);
+  font-weight: 600;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.actions button {
+  justify-content: flex-start;
+}
+.busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.spin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+.done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--allow);
+  font-weight: 600;
+}
+.done svg {
+  width: 14px;
+  height: 14px;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.spacer {
+  flex: 1;
+}
+.hint {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Phones: a bottom card above the disclaimer footer. */
+@media (max-width: 699px) {
+  .card {
+    left: 8px !important;
+    right: 8px;
+    top: auto !important;
+    bottom: calc(var(--footer-h) + 8px);
+    width: auto;
+    max-width: none;
+    border-radius: 14px;
+  }
+  .cardTop {
+    top: calc(var(--topbar-h) + 8px) !important;
+    bottom: auto;
+  }
+  .hint {
+    display: none;
+  }
+}
+
+.note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  flex-basis: 100%;
+}

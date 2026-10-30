@@ -8,6 +8,7 @@ const diff = execFileSync("git", ["diff", "--cached", "-U0", "--no-color"], { en
 const patterns = [
   ["Anthropic key", /sk-ant-[A-Za-z0-9_-]{10,}/],
   ["Groq key", /gsk_[A-Za-z0-9]{20,}/],
+  ["Google/Gemini API key", /AIza[0-9A-Za-z_-]{30,}/],
   ["OpenAI-style key", /\bsk-[A-Za-z0-9]{32,}/],
   ["GitHub token", /\b(gh[opusr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/],
   ["Vercel token", /\bvercel_[A-Za-z0-9]{20,}/i],
@@ -15,6 +16,8 @@ const patterns = [
   ["AWS key", /\bAKIA[0-9A-Z]{16}\b/],
   ["Private key", /-----BEGIN [A-Z ]*PRIVATE KEY-----/],
   ["Generic secret assignment", /\b(api[_-]?key|secret|token|password)\b["']?\s*[:=]\s*["'][A-Za-z0-9_\-./+=]{20,}["']/i],
+  // ENV-style names such as GEMINI_API_KEY=... or "GROQ_TOKEN": "..." (quoted or not); empty placeholders don't match.
+  ["Env-style secret assignment", /\b[A-Z0-9_]*(API_KEY|_TOKEN|_SECRET|PASSWORD)\b["']?\s*[:=]\s*["']?[A-Za-z0-9_\-./+=]{20,}/],
 ];
 
 let file = "";
