@@ -59,3 +59,26 @@ Each entry: date, decision, reason. SPEC.md is never edited; amendments to it ar
 
 ### D-007 · B5 future date
 B5 uses "Effective 1 Jan 2030" so the variant stays in the future for the life of the demo.
+
+### D-008 · Toolchain pins and subagent invocation
+- `corepack enable` failed with EPERM (Program Files); pnpm 9.15.9 installed with `npm i -g pnpm@9` instead.
+- TypeScript pinned to 5.9 (pnpm resolved 7.0, which Next 15's type-check integration doesn't support); `@next/env` pinned to 15 to match `next@15.5`.
+- Line endings forced to LF via `.gitattributes` so seed docs stay byte-exact on Windows.
+- Project subagents in `.claude/agents/` load only when a Claude Code session starts. In the session that created them,
+  each role runs as a general-purpose agent instructed to read and follow its `.claude/agents/<role>.md` file. Future
+  sessions (and `/build`) use the named agents directly.
+
+### D-009 · Groq structured output mode
+Groq supports `response_format: {type: "json_schema", strict: true}` (constrained decoding) only on a few models, and
+not together with tool use or streaming. Strict mode requires every property in `required`, `additionalProperties: false`
+and nullable unions for optional values, so the JSON schemas sent to Groq make `amountMax` nullable and zod maps
+`null` → absent before validation.
+
+### D-010 · ESCALATE template recheck is deterministic too
+Extends D-005: the ESCALATE template is asserted timeline-free (no digits, no day/hour words, no detector hit) and rechecked
+through `decide()` with zero draft claims (→ ALLOW `NO_POLICY_CLAIM`). No AI call. (QA Phase 0 finding #5.)
+
+### D-011 · Sequencing note
+While QA reviewed the Phase 0 tests, the orchestrator drafted the Phase 1 engine in `lib/engine/` (files QA was not reviewing).
+To keep the Phase 0 evidence honest, the stubs were temporarily restored to capture the failing test run, then the engine was
+put back. Phase 1 still goes through its own tester run and independent QA review.

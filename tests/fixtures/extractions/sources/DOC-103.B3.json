@@ -1,0 +1,25 @@
+{
+  "sourceId": "DOC-103",
+  "variant": "B3",
+  "body": "# Reversal Timeline Update\nEffective 27 Oct 2026. Approved by Head of Ops. Failed transfers are reversed within 1 business day.\n",
+  "claims": [
+    {
+      "claimId": "DOC-103#1",
+      "sourceId": "DOC-103",
+      "sourceVersion": 1,
+      "topic": "reversal_window",
+      "scope": {
+        "rail": "any"
+      },
+      "effectiveFrom": "2026-10-27",
+      "statusWording": "in_force",
+      "supersedes": null,
+      "value": {
+        "amount": 1,
+        "unit": "business_days"
+      },
+      "valueText": "1 business day",
+      "quote": "Failed transfers are reversed within 1 business day."
+    }
+  ]
+}

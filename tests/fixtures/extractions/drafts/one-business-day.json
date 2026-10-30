@@ -1,0 +1,16 @@
+{
+  "draft": "Failed transfers are reversed within 1 business day.",
+  "claims": [
+    {
+      "claimId": "draft#1",
+      "topic": "reversal_window",
+      "value": {
+        "amount": 1,
+        "unit": "business_days"
+      },
+      "valueText": "1 business day",
+      "span": "reversed within 1 business day",
+      "definitive": true
+    }
+  ]
+}

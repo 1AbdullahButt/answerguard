@@ -1,0 +1,72 @@
+[
+  {
+    "id": "DOC-101",
+    "title": "Outgoing Transfers: Reversal SOP",
+    "kind": "sop",
+    "bodyFile": "DOC-101.md",
+    "version": 1,
+    "verification": "verified",
+    "verifiedAt": "2026-10-01",
+    "updatedAt": "2026-09-30",
+    "owner": { "name": "Sara Malik", "active": true },
+    "flaggedOutdated": false,
+    "flagNote": null,
+    "visibility": "everyone"
+  },
+  {
+    "id": "DOC-103",
+    "title": "Instant Rail: Reversal Exception",
+    "kind": "policy",
+    "bodyFile": "DOC-103.md",
+    "version": 1,
+    "verification": "verified",
+    "verifiedAt": "2026-10-26",
+    "updatedAt": "2026-10-26",
+    "owner": { "name": "Bilal Ahmed", "active": true },
+    "flaggedOutdated": false,
+    "flagNote": null,
+    "visibility": "everyone"
+  },
+  {
+    "id": "SRC-202",
+    "title": "Slack #ops-announcements · 2026-10-24",
+    "kind": "slack",
+    "bodyFile": "SRC-202.md",
+    "version": 1,
+    "verification": "unverified",
+    "verifiedAt": null,
+    "updatedAt": "2026-10-24",
+    "owner": null,
+    "flaggedOutdated": false,
+    "flagNote": null,
+    "visibility": "everyone"
+  },
+  {
+    "id": "DOC-104",
+    "title": "Support Macros: Transfers",
+    "kind": "macro",
+    "bodyFile": "DOC-104.md",
+    "version": 1,
+    "verification": "unverified",
+    "verifiedAt": null,
+    "updatedAt": "2026-08-12",
+    "owner": { "name": "Zara", "active": false },
+    "flaggedOutdated": true,
+    "flagNote": "timeline looks old",
+    "visibility": "everyone"
+  },
+  {
+    "id": "DOC-105",
+    "title": "Compliance: Fraud Hold Procedure",
+    "kind": "policy",
+    "bodyFile": "DOC-105.md",
+    "version": 1,
+    "verification": "verified",
+    "verifiedAt": "2026-10-10",
+    "updatedAt": "2026-10-10",
+    "owner": { "name": "Compliance", "active": true },
+    "flaggedOutdated": false,
+    "flagNote": null,
+    "visibility": "ops"
+  }
+]

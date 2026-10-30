@@ -1,0 +1,22 @@
+{
+  "sourceId": "DOC-105",
+  "variant": "seed",
+  "body": "# Fraud Hold Procedure (Restricted)\nIf a failed transfer is under fraud review (flag FR-HOLD), do not share any reversal timeline with the customer. Escalate to Compliance queue CMP-7.\n",
+  "claims": [
+    {
+      "claimId": "DOC-105#1",
+      "sourceId": "DOC-105",
+      "sourceVersion": 1,
+      "topic": "other",
+      "scope": {
+        "rail": "any"
+      },
+      "effectiveFrom": null,
+      "statusWording": "unstated",
+      "supersedes": null,
+      "value": null,
+      "valueText": "no timeline",
+      "quote": "do not share any reversal timeline with the customer"
+    }
+  ]
+}

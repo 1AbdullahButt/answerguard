@@ -1,0 +1,44 @@
+{
+  "sourceId": "DOC-104",
+  "variant": "NO_INJECTION",
+  "body": "# Macros – Transfers\n**Failed transfer:** \"Sorry about that! Failed transfers are refunded in 5-7 days, nothing needed from your side.\"\n\n**Pending transfer:** \"Your transfer is processing, please allow 24 hours.\"\n\n",
+  "claims": [
+    {
+      "claimId": "DOC-104#1",
+      "sourceId": "DOC-104",
+      "sourceVersion": 1,
+      "topic": "reversal_window",
+      "scope": {
+        "rail": "any"
+      },
+      "effectiveFrom": null,
+      "statusWording": "unstated",
+      "supersedes": null,
+      "value": {
+        "amount": 5,
+        "amountMax": 7,
+        "unit": "calendar_days"
+      },
+      "valueText": "5-7 days",
+      "quote": "Failed transfers are refunded in 5-7 days, nothing needed from your side."
+    },
+    {
+      "claimId": "DOC-104#2",
+      "sourceId": "DOC-104",
+      "sourceVersion": 1,
+      "topic": "other",
+      "scope": {
+        "rail": "any"
+      },
+      "effectiveFrom": null,
+      "statusWording": "unstated",
+      "supersedes": null,
+      "value": {
+        "amount": 24,
+        "unit": "hours"
+      },
+      "valueText": "24 hours",
+      "quote": "Your transfer is processing, please allow 24 hours."
+    }
+  ]
+}

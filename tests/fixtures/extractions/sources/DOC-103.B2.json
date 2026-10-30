@@ -1,0 +1,28 @@
+{
+  "sourceId": "DOC-103",
+  "variant": "B2",
+  "body": "# Instant Rail – Reversal Exception\nProposed change, pending sign-off from Compliance. Not approved yet; do not use with customers until Bilal confirms.\n\nFor instant-rail transfers only, failed transfers are reversed within 1 business day.\nThis supersedes section 3 of the Outgoing Transfers – Reversal SOP for instant-rail transfers. Standard transfers are unchanged.\n\nHow to tell the rail: check \"Rail\" on the transaction in the admin panel.\n",
+  "claims": [
+    {
+      "claimId": "DOC-103#1",
+      "sourceId": "DOC-103",
+      "sourceVersion": 1,
+      "topic": "reversal_window",
+      "scope": {
+        "rail": "instant"
+      },
+      "effectiveFrom": null,
+      "statusWording": "pending_approval",
+      "supersedes": {
+        "targetText": "section 3 of the Outgoing Transfers – Reversal SOP",
+        "quote": "This supersedes section 3 of the Outgoing Transfers – Reversal SOP for instant-rail transfers."
+      },
+      "value": {
+        "amount": 1,
+        "unit": "business_days"
+      },
+      "valueText": "1 business day",
+      "quote": "For instant-rail transfers only, failed transfers are reversed within 1 business day."
+    }
+  ]
+}
