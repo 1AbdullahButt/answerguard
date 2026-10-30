@@ -11,3 +11,6 @@ coverage/
 next-env.d.ts
 .loop/attempts.json
 design/build-screens/
+
+.vercel
+.env*

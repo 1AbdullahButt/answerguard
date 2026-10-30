@@ -1,0 +1,10 @@
+# Never upload local secrets or local-only working files to Vercel.
+.env*
+!.env.example
+.loop/
+.claude/
+design/audit/
+design/build-screens/
+docs/demo.webm
+test-results/
+playwright-report/

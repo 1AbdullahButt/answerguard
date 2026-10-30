@@ -5,7 +5,7 @@
   "description": "AnswerGuard: an independent product concept for Slite Agent. Synthetic data only.",
   "packageManager": "pnpm@9.15.9",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",

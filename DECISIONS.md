@@ -263,3 +263,19 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
 - Esc closes only the innermost control: the Reset dialog and persona tooltip mark Esc as handled (`preventDefault`), and the
   tour ignores handled events. Verified in a browser (4/4 cases).
 - The phone top bar keeps the product mark; the README states the spend limit is confirmed at deploy.
+
+### D-025 · Deploy setup (approved by Abdullah)
+- **Vercel:** project `answerguard`, linked and deployed with the CLI under the account's default team (`youth-pay`, team name
+  "Abdullah Butt", hobby plan). Linking the private GitHub repo failed (the Vercel GitHub app has no access to it), so
+  deploys go through the CLI; the repo stays private. Node pinned to 22.x (the version everything was tested on).
+  `.vercelignore` keeps `.env*`, `.loop/`, `.claude/` and local screenshots out of uploads.
+- **Env vars (Production):** AI_PROVIDER, AI_FALLBACK_PROVIDER, AI_MODE, GROQ_API_KEY, GEMINI_API_KEY, RATE_LIMIT_PER_10MIN,
+  GLOBAL_LIVE_CHECKS_PER_DAY, added with `vercel env add` from `.env.local` via stdin; values never printed.
+- **Spend limits:** both keys are free tier with no billing account linked, so there is nothing to spend. When the quota
+  runs out, requests are refused (429). That's a hard stop at $0. (SPEC §10.1's "confirm in the console" is answered by this.)
+- **Upstash: skipped.** `vercel integration add upstash/upstash-kv` needs marketplace terms accepted in a browser. With no money
+  at risk (only quota), the in-memory per-instance limiter + the providers' free-tier quotas + the saved-response fallback are
+  enough for this demo. The Upstash code path stays and activates if the two UPSTASH_* vars are ever added. Documented as a
+  limitation: the in-memory limiter isn't shared across serverless instances (SPEC §10.3).
+- The Gemini key on this account uses a newer non-`AIza` format; the pre-commit scan still catches it via the env-style
+  `GEMINI_API_KEY=` pattern, but a bare value of that format in code wouldn't be recognised by prefix.

@@ -11,7 +11,7 @@ A support agent writes a reply. Before it's sent, AnswerGuard:
 3. weighs those sources with transparent, deterministic rules, and
 4. returns **Allow, Caution, Hold or Escalate**, plus a rechecked safe reply and the full reasoning.
 
-**Live demo:** _URL added at deploy_ · works with no setup; the canonical path replays saved AI responses if live AI is
+**Live demo:** https://answerguard.vercel.app · works with no setup; the canonical path replays saved AI responses if live AI is
 unavailable or rate-limited. **Walkthrough video:** _link added after recording._
 
 ![AnswerGuard demo: a 4-day draft is held because the instant-rail exception says 1 business day; the safe reply is used and sent; an unknown-rail ticket escalates with a holding reply.](docs/demo.gif)
@@ -80,8 +80,12 @@ flowchart TD
   (an intercept), Caution needs an acknowledgement, and AI unavailable returns 503.
 - **Permissions (simulated):** the persona filter runs before extraction, so a hidden source never reaches the AI or a
   response. Personas are not authorization: anyone can switch, and a real deployment would take the role from the session.
-- **Abuse and cost controls:** a provider spend limit on a dedicated demo key (its behaviour, hard stop vs alert, is confirmed and recorded at deploy), a shared Upstash limiter (per IP + global daily cap) that falls back
-  to saved responses with a "Live AI paused" badge, input caps, and free cache hits.
+- **Spend limit:** Both keys are free tier with no billing account linked, so there is nothing to spend. When the quota runs out, requests are refused (429). That's a hard stop at $0.
+- **Rate limiting on the public demo:** an in-memory per-instance limiter (not shared across serverless instances), the
+  providers' free-tier quotas, and the saved-response fallback with a "Live AI paused" badge. Upstash was skipped because
+  installing it needs a browser terms click and there is no money at risk, only quota (DECISIONS D-025). The code also supports
+  a shared Upstash limiter (per IP + global daily cap); it switches on if the two `UPSTASH_REDIS_REST_*` vars are added.
+  Input caps (4,000 chars per doc, 1,000 per draft, 6 sources) and free cache hits apply either way.
 
 ## Tests and eval
 
@@ -131,6 +135,7 @@ the spec; a Stop hook that refuses to end a phase without evidence). The log wit
 - Personas are simulated: anyone can switch. DOC-105 is synthetic. Never use this design with real restricted data.
 - No real Slite or Intercom integration; all data is synthetic.
 - Free-tier AI limits (Groq ~8K tokens/min): concurrent live checks fall back to saved responses with a visible badge.
+- No shared rate limiter on the public demo (Upstash skipped, D-025): the in-memory limiter is per serverless instance.
 - Saved responses cover the seeded docs, the Appendix B variants and the canonical drafts; arbitrary new text needs live AI.
 
 ## What not to claim
