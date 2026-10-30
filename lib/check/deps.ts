@@ -1,21 +1,10 @@
-// The AI dependencies used by the API routes. Phase 1 ships no AI code: every extraction reports
-// "AI unavailable", which the engine turns into AI_UNAVAILABLE (draft) or SOURCE_UNREAD (sources).
-// Phase 2 replaces this with the provider-backed implementation in lib/ai/.
-import type { AiRunInfo, CheckDeps } from "@/lib/engine/types";
+// The AI dependencies used by the API routes: cache → saved responses → live provider (Groq by default, D-001)
+// behind the shared limiter. One limiter unit per check that actually needs a live call (SPEC §10).
+import { aiDeps, createRuntime } from "@/lib/ai/aiDeps";
+import type { CheckDeps } from "@/lib/engine/types";
+import { allowLiveCheck, clientIp } from "@/lib/rateLimit";
 
-const UNAVAILABLE: AiRunInfo = { mode: "unavailable", model: "none", latencyMs: 0, promptVersion: "none" };
-
-class AiUnavailableError extends Error {
-  readonly info = UNAVAILABLE;
-}
-
-export function routeDeps(): CheckDeps {
-  return {
-    extractDraft: async () => {
-      throw new AiUnavailableError("AI provider not configured");
-    },
-    extractSource: async () => {
-      throw new AiUnavailableError("AI provider not configured");
-    },
-  };
+export function routeDeps(headers: Headers): CheckDeps {
+  const ip = clientIp(headers);
+  return aiDeps(createRuntime({ liveGate: () => allowLiveCheck(ip) }));
 }

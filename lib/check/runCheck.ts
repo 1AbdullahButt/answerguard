@@ -110,6 +110,8 @@ function combineInfo(infos: AiRunInfo[], draftFailed: boolean): AiRunInfo {
     model: first?.model ?? "unknown",
     latencyMs: infos.reduce((max, i) => Math.max(max, i.latencyMs), 0),
     promptVersion: first?.promptVersion ?? "unknown",
+    ...(first?.provider ? { provider: first.provider } : {}),
+    ...(infos.some((i) => i.fellBack) ? { fellBack: true } : {}),
     ...(infos.some((i) => i.paused) ? { paused: true } : {}),
   };
 }

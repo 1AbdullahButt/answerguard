@@ -1,0 +1,31 @@
+{
+  "key": "e9af9b1815ae5b28359a7d9fd7708d091a79c9ce54c2b515e6d9abc91dc85b05",
+  "identity": {
+    "task": "source_extraction",
+    "promptVersion": "2026-10-30.2",
+    "schemaVersion": "2026-10-30.1",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "inputText": "# Outgoing Transfers – Reversal SOP\nOwner: Sara (Payments Ops). Last reviewed with Settlement team in Sept.\n\n## 1. Scope\nCovers outgoing transfers from wallet to other banks (all rails).\n\n## 2. Common failure reasons\n- beneficiary account closed / title mismatch\n- bank side timeout (rare, mostly month-end)\n\n## 3. Reversal timeline\nWhen an outgoing transfer fails, the amount is reversed to the customer's wallet within 4 business days. Do NOT promise same day. If it's been longer than that, raise a Jira ticket to Settlement with the TxID.\n\n## 4. Fees\nTransfer fee is refunded with the principal. No separate request needed.\n",
+    "sourceKind": "sop"
+  },
+  "output": {
+    "claims": [
+      {
+        "topic": "reversal_window",
+        "value": {
+          "amount": 4,
+          "amountMax": null,
+          "unit": "business_days"
+        },
+        "valueText": "4 business days",
+        "rail": "any",
+        "effectiveFrom": null,
+        "statusWording": "unstated",
+        "supersedes": null,
+        "quote": "When an outgoing transfer fails, the amount is reversed to the customer's wallet within 4 business days."
+      }
+    ]
+  },
+  "recordedAt": "2026-10-30T17:27:07.796Z"
+}

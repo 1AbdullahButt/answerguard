@@ -158,6 +158,10 @@ export interface AiRunInfo {
   model: string;
   latencyMs: number;
   promptVersion: string;
+  /** Which provider produced (or would have produced) this output (D-017). */
+  provider?: string;
+  /** true when the primary provider was rate-limited or failed and the fallback answered. */
+  fellBack?: boolean;
   /** true when live AI was skipped because a rate limit or provider 429 was hit (SPEC §10 "Live AI paused"). */
   paused?: boolean;
 }

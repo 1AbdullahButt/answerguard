@@ -112,3 +112,107 @@ D:/Project/slite 3ff0f35 [main]
 ```
 
 GATE: PASSED
+
+## Phase 2
+**Built:** the live AI layer, with two providers behind one adapter (D-001, D-017). Files: `lib/ai/client.ts` (Groq `openai/gpt-oss-120b` with strict JSON schema; Gemini `gemini-3.5-flash-lite` with native JSON schema; Anthropic off by default; 429/quota detection; throttling for scripts), `lib/ai/aiDeps.ts` (memory → saved → live primary → fallback once → paused/unavailable; zod; retry once), `lib/ai/{schemas,prompts,cache}.ts` (PROMPT_VERSION 2026-10-30.2, `<document>` envelope, full cache identity incl. provider + model), `lib/rateLimit.ts` (Upstash per-IP + global daily, in-memory fallback), `lib/workspace/variants.ts`, `scripts/{eval,record-ai-cache,probe-extract,groq-models}.ts`, `evals/{golden.json,results.md}`, `data/ai-cache/` (17 saved responses), `.github/workflows/ci.yml`.
+
+**Amendments during the phase:** D-017 (Groq + Gemini, fallback on 429/quota, eval on both). The v2 prompt fix (proposals are claims; quotes exclude markdown labels) fixed Gemini's missed SRC-202 claim and its rejected DOC-104 quotes, without touching rules or tests.
+
+**QA loop:** the first review returned CHANGES_REQUIRED (2 major: saved lookups tied to the configured provider; template-reply extractions not recorded; plus 9 minor). All were fixed (D-018). The re-review came back APPROVED; 2 of its 4 remaining minors were fixed afterwards (fixed tie-break order, escaped governing quote).
+
+**Live eval** (`pnpm eval`, both providers, 3 runs each, throttled), from `evals/results.md`:
+```
+**Selection:** `AI_PROVIDER=groq`, `AI_FALLBACK_PROVIDER=gemini`. Both passed the gate and tied on every metric (0 quote rejections each, equal field accuracy); the incumbent primary (groq) is kept.
+  [groq] `openai/gpt-oss-120b`
+- Runs per case: 3 · date: 2026-10-30T17:22:19.643Z · throttled to stay under the free tier
+- Decision accuracy: **100.0%** (36/36)
+- Quote validity: **100.0%** (39/39 extracted quotes/spans verbatim; 0 rejected)
+- Extraction field accuracy (vs hand-written fixtures): **100.0%** (180/180)
+- Gate (canonical tickets + B1, B2, B3, B7 correct on every run): **PASS**
+  [gemini] `gemini-3.5-flash-lite`
+- Runs per case: 3 · date: 2026-10-30T17:25:27.542Z · throttled to stay under the free tier
+- Decision accuracy: **100.0%** (36/36)
+- Quote validity: **100.0%** (38/38 extracted quotes/spans verbatim; 0 rejected)
+- Extraction field accuracy (vs hand-written fixtures): **100.0%** (180/180)
+- Gate (canonical tickets + B1, B2, B3, B7 correct on every run): **PASS**
+```
+
+**Recording** (`pnpm record`, Groq, throttled):
+```
+✓ support_agent canon-9001  HOLD/CONTRADICTS_GOVERNING · safe reply (ai) rechecks ALLOW/SUPPORTED
+✓ support_agent canon-9002  ESCALATE/SCOPE_UNKNOWN · safe reply (template) rechecks ALLOW/NO_POLICY_CLAIM
+✓ support_agent canon-9003  ALLOW/SUPPORTED
+✓ support_agent B1          HOLD/CONTRADICTS_GOVERNING · safe reply (ai) rechecks CAUTION/CHANGE_SIGNALLED
+✓ support_agent B2          CAUTION/CHANGE_SIGNALLED
+✓ support_agent B3          ESCALATE/CONFLICT_UNRESOLVED · safe reply (template) rechecks ALLOW/NO_POLICY_CLAIM
+✓ support_agent B4          CAUTION/CHANGE_SIGNALLED
+✓ support_agent B5          CAUTION/CHANGE_SIGNALLED
+✓ support_agent B6          CAUTION/WEAK_BASIS
+✓ support_agent B7          CAUTION/WEAK_BASIS
+✓ support_agent allow-1day  ALLOW/SUPPORTED
+✓ support_agent no-claim    ALLOW/NO_POLICY_CLAIM
+✓ ops_lead      canon-9001  HOLD/CONTRADICTS_GOVERNING · safe reply (ai) rechecks ALLOW/SUPPORTED
+✓ ops_lead      canon-9002  ESCALATE/SCOPE_UNKNOWN · safe reply (template) rechecks ALLOW/NO_POLICY_CLAIM
+✓ ops_lead      canon-9003  ALLOW/SUPPORTED
+✓ ops_lead      B1          HOLD/CONTRADICTS_GOVERNING · safe reply (ai) rechecks CAUTION/CHANGE_SIGNALLED
+✓ ops_lead      B2          CAUTION/CHANGE_SIGNALLED
+✓ ops_lead      B3          ESCALATE/CONFLICT_UNRESOLVED · safe reply (template) rechecks ALLOW/NO_POLICY_CLAIM
+✓ ops_lead      B4          CAUTION/CHANGE_SIGNALLED
+✓ ops_lead      B5          CAUTION/CHANGE_SIGNALLED
+✓ ops_lead      B6          CAUTION/WEAK_BASIS
+✓ ops_lead      B7          CAUTION/WEAK_BASIS
+✓ ops_lead      allow-1day  ALLOW/SUPPORTED
+✓ ops_lead      no-claim    ALLOW/NO_POLICY_CLAIM
+Recorded 17 saved responses in data/ai-cache (groq / openai/gpt-oss-120b). Mismatches: 0
+RECORD_EXIT=0
+```
+
+**Saved-mode replay with no keys** (`GROQ_API_KEY= GEMINI_API_KEY= AI_PROVIDER= AI_FALLBACK_PROVIDER= pnpm eval --saved`):
+```
+  ✓ canon-9001: HOLD/CONTRADICTS_GOVERNING
+  ✓ canon-9002: ESCALATE/SCOPE_UNKNOWN
+  ✓ canon-9003: ALLOW/SUPPORTED
+  ✓ B1: HOLD/CONTRADICTS_GOVERNING
+  ✓ B2: CAUTION/CHANGE_SIGNALLED
+  ✓ B3: ESCALATE/CONFLICT_UNRESOLVED
+  ✓ B4: CAUTION/CHANGE_SIGNALLED
+  ✓ B5: CAUTION/CHANGE_SIGNALLED
+  ✓ B6: CAUTION/WEAK_BASIS
+  ✓ B7: CAUTION/WEAK_BASIS
+  ✓ allow-1day: ALLOW/SUPPORTED
+  ✓ no-claim: ALLOW/NO_POLICY_CLAIM
+- Decision accuracy: **100.0%** (12/12)
+- Quote validity: **100.0%** (13/13 extracted quotes/spans verbatim; 0 rejected)
+- Extraction field accuracy (vs hand-written fixtures): **100.0%** (60/60)
+- Gate (canonical tickets + B1, B2, B3, B7 correct on every run): **PASS**
+| canon-9001 | gate | HOLD / CONTRADICTS_GOVERNING | ✓ | 1/1 |
+| canon-9002 | gate | ESCALATE / SCOPE_UNKNOWN | ✓ | 1/1 |
+| canon-9003 | gate | ALLOW / SUPPORTED | ✓ | 1/1 |
+| B1 | gate | HOLD / CONTRADICTS_GOVERNING | ✓ | 1/1 |
+| B2 | gate | CAUTION / CHANGE_SIGNALLED | ✓ | 1/1 |
+| B3 | gate | ESCALATE / CONFLICT_UNRESOLVED | ✓ | 1/1 |
+| B4 |  | CAUTION / CHANGE_SIGNALLED | ✓ | 1/1 |
+| B5 |  | CAUTION / CHANGE_SIGNALLED | ✓ | 1/1 |
+| B6 |  | CAUTION / WEAK_BASIS | ✓ | 1/1 |
+| B7 | gate | CAUTION / WEAK_BASIS | ✓ | 1/1 |
+| allow-1day |  | ALLOW / SUPPORTED | ✓ | 1/1 |
+| no-claim |  | ALLOW / NO_POLICY_CLAIM | ✓ | 1/1 |
+SAVED_EVAL_EXIT=0
+```
+
+**Typecheck and full test run:**
+```
+TYPECHECK_EXIT=0
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+TEST_EXIT=0
+```
+
+**QA verdict:** APPROVED (re-review, `.loop/qa-findings.md`). QA ran the typecheck, the tests and the build, plus `pnpm eval --saved` with keys unset and again with AI_PROVIDER=gemini (still replays 12/12), `pnpm eval --combine`, an identity check on all 17 cache files, a secret grep, and offline probes (DOC-105 never reaches a provider; paused on 429; limiter charged once per check, never on cache hits).
+
+**Worktrees:**
+```
+D:/Project/slite 6a14f10 [main]
+```
+
+GATE: PASSED

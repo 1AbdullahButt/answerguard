@@ -99,3 +99,81 @@ put back. Phase 1 still goes through its own tester run and independent QA revie
    the template. SPEC §6.7's "ALLOW or CAUTION" is the outer bound.
 7. Provider/API errors are listed as `EXTRACTION_ERROR`; `INVALID_OUTPUT` is reserved for output that failed validation.
 8. D5's fired trace lists conditions 1–4 explicitly; condition 2 (supersedes quote verbatim) is re-checked in the engine.
+
+### D-013 · Groq model: `openai/gpt-oss-120b`
+Groq's live model list for this key (2026-10-30): allam-2-7b, gpt-oss-20b, gpt-oss-120b, gpt-oss-safeguard-20b,
+qwen3.8-27b, whisper, prompt-guard, orpheus. Strict JSON-schema mode (constrained decoding) is documented for gpt-oss-20b,
+gpt-oss-120b and qwen3.8-27b; Groq's own comparison table lists only the gpt-oss models as strict. gpt-oss-120b is the
+largest of these, a reasoning model, and passed a smoke test with the exact schema shape (nullable nested objects, enums).
+Settings: temperature 0, `reasoning_effort: "medium"`. Override with `GROQ_MODEL`.
+Findings from the smoke test that shaped the schema layer: the model sometimes returns "27 Oct 2026" for an ISO field and an
+empty supersedes quote, so zod normalizes dates (unparseable → null) and keeps an empty supersedes quote for quote validation
+to drop (listed as a rejected extraction) instead of failing the whole output.
+
+### D-014 · Anthropic adapter details (off by default)
+The current `@anthropic-ai/sdk` Messages API rejects `temperature` for current models, so the adapter omits it and relies on a
+forced tool call + zod validation. Default model `claude-haiku-5-5` per SPEC §10.
+
+### D-015 · Fallback order and the eval
+- Runtime order per AI task: in-memory cache → saved response file (exact identity) → live provider (if configured and the
+  limiter allows) → AI unavailable. Saved files are checked before live, so unedited seed docs never call the model (SPEC §10.5).
+- A provider 429 or a limiter denial marks the run `paused` ("Live AI paused, showing saved responses"); it is not retried.
+- The eval bypasses saved files and starts each run with an empty in-memory cache; within one run identical inputs are
+  extracted once and shared across cases (keeps the run inside Groq free-tier token limits). Eval-only backoff on 429.
+
+### D-016 · Groq tier limits observed (deploy consideration)
+The key's limits (response headers, 2026-10-30): 1,000 requests/day and **8,000 tokens/minute** for gpt-oss-120b. One
+extraction costs ~1–1.5k tokens including reasoning, and a check runs the draft and every source in parallel, so bursts hit
+the TPM limit. Effects: the eval runs slowly (with backoff), and on the public demo concurrent live checks fall back to
+saved responses with the "Live AI paused" badge (the designed behaviour, SPEC §10). Unedited seed docs never call the model.
+A paid Groq tier would raise this; flagged for the Phase 4 deploy checkpoint, not changed here.
+
+### D-017 · Two providers: Groq + Gemini, with a fallback (amends D-001 and SPEC §10)
+Requested by Abdullah during Phase 2.
+- `lib/ai/client.ts` has three adapters: **groq** (`openai/gpt-oss-120b`, strict JSON schema), **gemini**
+  (`gemini-3.5-flash-lite` via the official `@google/genai` SDK, native `responseJsonSchema` + `application/json`),
+  and **anthropic** (off by default). `gemini-3.8-flash` is deliberately not used (its free daily quota is too small for the eval).
+- Env: `AI_PROVIDER` (groq|gemini), `AI_FALLBACK_PROVIDER`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `GROQ_MODEL`, `GEMINI_MODEL`
+  (plus `ANTHROPIC_*` for the off-by-default adapter).
+- Runtime chain per AI task: memory cache → saved response (primary identity, then the fallback's) → live primary →
+  on 429/quota (or a provider/network error) the fallback **once** → saved/unavailable with "Live AI paused". Invalid output
+  after the retry is reported, not masked by the other provider. `AiRunInfo` gains `provider` and `fellBack`.
+- Provider and model stay in the cache identity, so each provider's saved responses are separate.
+- The eval runs on both providers (3/3 each) and writes `evals/results.md`; whichever passes the gate becomes
+  `AI_PROVIDER`, the other `AI_FALLBACK_PROVIDER`; if both pass, fewer quote rejections wins.
+- Eval and recorder are throttled per provider (`throttled()`, Groq ≥12 s between calls for ~8K TPM, Gemini ≥4.5 s; Gemini
+  Flash-Lite ~500 requests/day) so they stay under free tiers instead of failing on 429s; backoff remains only as a safety net.
+- Unthrottled Groq eval run before this amendment (old script): 36/36 decisions, gate PASS, quote validity 38/38,
+  field accuracy 179/180 (one miss: supersedes not extracted from B2, which doesn't affect the decision).
+
+### D-018 · Phase 2 QA fixes
+1. **Saved responses replay whatever the configured provider.** Besides the primary/fallback chain, the runtime consults the
+   identities of every other known provider for saved lookups only (never live). A CI run or deploy whose `AI_PROVIDER` differs
+   from the recording still replays it. Each lookup is still an exact identity match (SPEC §10). CI also sets the selected
+   providers explicitly.
+2. **The recorder records the suggested reply's recheck.** After each golden case it reruns the full check on the suggestion
+   text (what `/api/send` does after "Use safe reply"), so the draft extraction for template replies is saved too and asserted
+   to recheck ALLOW/CAUTION. `pnpm record` now checks for a live provider before clearing `data/ai-cache`.
+3. If any provider in the chain was rate-limited, the task ends "paused" ("Live AI paused"), even if the fallback then failed
+   for another reason.
+4. `CheckResult.ai` carries `provider` and `fellBack`.
+5. A provider-side schema rejection (Groq 400 `json_validate_failed`) counts as invalid output: retried once on the same
+   provider, never handed to the fallback.
+6. User-editable text has closing `</document>` / `</reply>` tags neutralized before it goes into the prompt envelope.
+7. Per-call timeout 9 s and route `maxDuration` 60 s, so the worst case (extract → reply → reply recheck, each with one
+   fallback) returns the designed AI_UNAVAILABLE/paused state instead of a platform 504.
+8. Eval selection only counts complete 3-run reports for the current prompt version; `pnpm eval --combine` rebuilds
+   `evals/results.md` from the per-provider JSON without model calls.
+9. Structure: PLAN listed `extractSource.ts`, `extractDraft.ts`, `suggestReply.ts`, `validateQuote.ts`. They are consolidated:
+   the three AI tasks live in `lib/ai/aiDeps.ts` (one task runner, three thin task definitions) and quote validation in
+   `lib/check/runCheck.ts` + `lib/engine/normalize.ts`, because the engine (rules side) must validate quotes itself.
+
+### D-019 · Provider selection result and tie-break
+Full eval (prompt `2026-10-30.2`, 3 runs per provider, throttled): Groq `openai/gpt-oss-120b` and Gemini
+`gemini-3.5-flash-lite` both passed the gate with identical scores: decisions 36/36, quote rejections 0, field accuracy
+180/180. D-017's rule (fewer quote rejections wins) doesn't separate them, so the tie-breaks are field accuracy, then the
+incumbent primary. Result: `AI_PROVIDER=groq`, `AI_FALLBACK_PROVIDER=gemini` (set in `.env.local`, `.env.example`, CI).
+The two `results-<provider>.json` files from that run predate the `runs`/`promptVersion`/`fieldsCorrect` fields; those values
+were backfilled from each report's own markdown (same run), and `results.md` was rebuilt with `pnpm eval --combine`.
+The prompt fix that got Gemini there (v2: proposals are claims; quotes exclude markdown labels) didn't change Groq's
+results (Groq also 36/36 on v1).

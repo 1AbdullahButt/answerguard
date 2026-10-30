@@ -1,0 +1,27 @@
+{
+  "key": "c58b9ed164822b4cb51b1689ad726dbb509738c00c59d9c6941231d10a462ebb",
+  "identity": {
+    "task": "draft_extraction",
+    "promptVersion": "2026-10-30.2",
+    "schemaVersion": "2026-10-30.1",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "inputText": "Failed transfers are reversed within 1 business day."
+  },
+  "output": {
+    "claims": [
+      {
+        "topic": "reversal_window",
+        "value": {
+          "amount": 1,
+          "amountMax": null,
+          "unit": "business_days"
+        },
+        "valueText": "1 business day",
+        "span": "Failed transfers are reversed within 1 business day.",
+        "definitive": true
+      }
+    ]
+  },
+  "recordedAt": "2026-10-30T17:29:43.219Z"
+}

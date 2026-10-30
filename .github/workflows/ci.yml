@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Tests and e2e never call a live model: they use fixtures and the saved responses in data/ai-cache.
+      AI_MODE: saved
+      # Matches the eval selection in evals/results.md (D-017/D-019); saved lookups also try every provider (D-018).
+      AI_PROVIDER: groq
+      AI_FALLBACK_PROVIDER: gemini
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Saved-response replay reproduces the golden decisions
+        run: pnpm eval --saved

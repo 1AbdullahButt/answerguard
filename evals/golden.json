@@ -1,0 +1,19 @@
+{
+  "decisionTime": "2026-10-30T12:00:00Z",
+  "saveTime": "2026-10-29T09:00:00Z",
+  "gate": ["canon-9001", "canon-9002", "canon-9003", "B1", "B2", "B3", "B7"],
+  "cases": [
+    { "id": "canon-9001", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": null, "expect": { "decision": "HOLD", "reasonCode": "CONTRADICTS_GOVERNING", "suggestionIncludes": "1 business day" } },
+    { "id": "canon-9002", "ticketId": "TCK-9002", "rail": "unknown", "draft": "Failed transfers are reversed within 4 business days.", "variant": null, "expect": { "decision": "ESCALATE", "reasonCode": "SCOPE_UNKNOWN" } },
+    { "id": "canon-9003", "ticketId": "TCK-9003", "rail": "standard", "draft": "Failed transfers are reversed within 4 business days.", "variant": null, "expect": { "decision": "ALLOW", "reasonCode": "SUPPORTED" } },
+    { "id": "B1", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B1", "expect": { "decision": "HOLD", "reasonCode": "CONTRADICTS_GOVERNING", "suggestionIncludes": "2 business days" } },
+    { "id": "B2", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B2", "expect": { "decision": "CAUTION", "reasonCode": "CHANGE_SIGNALLED" } },
+    { "id": "B3", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B3", "expect": { "decision": "ESCALATE", "reasonCode": "CONFLICT_UNRESOLVED" } },
+    { "id": "B4", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B4", "expect": { "decision": "CAUTION", "reasonCode": "CHANGE_SIGNALLED" } },
+    { "id": "B5", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B5", "expect": { "decision": "CAUTION", "reasonCode": "CHANGE_SIGNALLED" } },
+    { "id": "B6", "ticketId": "TCK-9003", "rail": "standard", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B6", "expect": { "decision": "CAUTION", "reasonCode": "WEAK_BASIS" } },
+    { "id": "B7", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 4 business days.", "variant": "B7", "expect": { "decision": "CAUTION", "reasonCode": "WEAK_BASIS" } },
+    { "id": "allow-1day", "ticketId": "TCK-9001", "rail": "instant", "draft": "Failed transfers are reversed within 1 business day.", "variant": null, "expect": { "decision": "ALLOW", "reasonCode": "SUPPORTED" } },
+    { "id": "no-claim", "ticketId": "TCK-9003", "rail": "standard", "draft": "Sorry about the trouble with your transfer. I'm looking into it now and will keep you posted here.", "variant": null, "expect": { "decision": "ALLOW", "reasonCode": "NO_POLICY_CLAIM" } }
+  ]
+}

@@ -3,9 +3,11 @@ import { routeDeps } from "@/lib/check/deps";
 import { handleSend } from "@/lib/check/handlers";
 
 export const runtime = "nodejs";
+// Live extraction of several sources plus a safe reply can take a few seconds on a cold start.
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const json: unknown = await req.json().catch(() => null);
-  const { status, body } = await handleSend(json, routeDeps());
+  const { status, body } = await handleSend(json, routeDeps(req.headers));
   return NextResponse.json(body, { status });
 }

@@ -1,0 +1,31 @@
+{
+  "key": "a6b79e7875eb39fb05ede6785b9b5f9d4419e4b052fec4c70c188b82c35069a2",
+  "identity": {
+    "task": "source_extraction",
+    "promptVersion": "2026-10-30.2",
+    "schemaVersion": "2026-10-30.1",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "inputText": "# Reversal Timeline Update\nEffective 27 Oct 2026. Approved by Head of Ops. Failed transfers are reversed within 1 business day.\n",
+    "sourceKind": "policy"
+  },
+  "output": {
+    "claims": [
+      {
+        "topic": "reversal_window",
+        "value": {
+          "amount": 1,
+          "amountMax": null,
+          "unit": "business_days"
+        },
+        "valueText": "1 business day",
+        "rail": "any",
+        "effectiveFrom": "2026-10-27",
+        "statusWording": "in_force",
+        "supersedes": null,
+        "quote": "Failed transfers are reversed within 1 business day."
+      }
+    ]
+  },
+  "recordedAt": "2026-10-30T17:29:19.591Z"
+}
