@@ -360,3 +360,13 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
   engine's verbatim detail (quotes, D5's four conditions) is behind a per-row "Details" toggle.
 - The ID column is 64 px and non-wrapping, and the roll-up row is labelled "Result" (engine rule "Overall" in its title).
 - No engine, API or test changes.
+
+### D-030 · Repo made public; Demo menu links to GitHub (requested by Abdullah)
+- Before switching visibility, the full git history (14 commits, all branches) was scanned for secrets: key patterns
+  (Groq, Gemini/Google, Anthropic, OpenAI, GitHub, Vercel/OIDC, JWT, AWS, private keys, env-style assignments) and the exact
+  values in `.env.local`. No hits; no `.env` file other than `.env.example` was ever committed; commit author emails are the
+  GitHub noreply address (or a placeholder). Then `gh repo edit --visibility public`.
+- The Demo menu's "How it works · GitHub" link (the artboard's label) now opens https://github.com/1AbdullahButt/answerguard
+  in a new tab (`rel="noopener noreferrer"`, with "(opens in a new tab)" for screen readers). This supersedes the private-repo
+  notes in D-025, D-027 and D-028. The in-app `/how-it-works` page stays as an offline copy of the README but is no longer linked.
+- Vercel deploys still go through the CLI (the Vercel GitHub app isn't connected).

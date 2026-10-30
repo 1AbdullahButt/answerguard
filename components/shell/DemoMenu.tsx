@@ -29,9 +29,13 @@ function Tile({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** The public source repo (README: problem, architecture, AI vs rules, tests, eval). */
+const REPO_URL = "https://github.com/1AbdullahButt/answerguard";
+
 /**
  * Demo menu (design v2 DemoMenu artboard): personas, the three Impact numbers, the AI mode line, the past flags to
- * review, the guided tour, Reset demo and "How it works". A non-modal popover dialog; Esc and outside clicks close it.
+ * review, the guided tour, Reset demo and "How it works · GitHub". A non-modal popover dialog; Esc and outside clicks
+ * close it.
  */
 export function DemoMenu({
   role,
@@ -177,8 +181,9 @@ export function DemoMenu({
         <button type="button" className={cx(ui.btn, ui.outline)} onClick={onReset}>
           Reset demo
         </button>
-        <a className={s.howLink} href="/how-it-works">
-          How it works
+        <a className={s.howLink} href={REPO_URL} target="_blank" rel="noopener noreferrer">
+          How it works · GitHub
+          <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </div>
     </div>

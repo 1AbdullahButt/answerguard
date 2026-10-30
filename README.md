@@ -11,7 +11,7 @@ A support agent writes a reply. Before it's sent, AnswerGuard:
 3. weighs those sources with transparent, deterministic rules, and
 4. returns **Allow, Caution, Hold or Escalate**, plus a rechecked safe reply and the full reasoning.
 
-**Live demo:** https://answerguard.vercel.app · works with no setup; the canonical path replays saved AI responses if live AI is
+**Live demo:** https://answerguard.vercel.app · **Source:** https://github.com/1AbdullahButt/answerguard · works with no setup; the canonical path replays saved AI responses if live AI is
 unavailable or rate-limited. **Walkthrough video:** _link added after recording._
 
 ![AnswerGuard demo: a 4-day draft is held because the instant-rail exception says 1 business day; the safe reply is used and sent; an unknown-rail ticket escalates with a holding reply.](docs/demo.gif)
