@@ -216,3 +216,64 @@ D:/Project/slite 6a14f10 [main]
 ```
 
 GATE: PASSED
+
+## Phase 3
+**Built:** the UI, from the approved mockups plus the D-021 changes. Design: `design/DESIGN.md`, three mockups, and `design/UI-CONTRACT.md` (the accessible names shared with the e2e test). Code:
+- `app/` and `styles/tokens.css`
+- `components/shell|inbox|panel|ui`: inbox, side panel, Check / Reasoning / Sources / Impact tabs, states, responsive slide-over and bottom sheet
+- `lib/client/`: workspace overrides and metrics in localStorage, with try/catch and a memory fallback
+- `e2e/demo.spec.ts` + `playwright.config.ts` (locked), `scripts/ui-audit.ts`, and an e2e step in CI
+
+**Process notes:**
+- Your approval came with 4 changes (D-021) and the narrow stop-hook waiting marker (D-020, plus the helper fix D-020a).
+- While adding the e2e to the lock, a shell-escaping slip briefly put `/(^|D)1(D|$)/` in the Impact assertion. I removed `e2e/` from `.loop/locked`, fixed the regex to `/(^|\D)1(\D|$)/` (verified against "1", "10" and "11"), and re-locked it before any UI work used it.
+
+**QA loop:** the first review returned CHANGES_REQUIRED (1 major: the footer disclaimer was truncated at 390 px; 5 minor). I fixed all six. The re-review came back APPROVED with 2 minors: duplicated banner copy (fixed) and the phone bottom sheet covering the composer (as designed; noted for the Phase 4 phone smoke test).
+
+**UI audit** (`pnpm exec tsx scripts/ui-audit.ts --serve`, saved mode, 6 states × 3 widths):
+```
+empty       1440px  axe: none
+check-hold  1440px  axe: none
+reasoning   1440px  axe: none
+sources     1440px  axe: none
+impact      1440px  axe: none
+escalate    1440px  axe: none
+empty       1024px  axe: none
+check-hold  1024px  axe: none
+reasoning   1024px  axe: none
+sources     1024px  axe: none
+impact      1024px  axe: none
+escalate    1024px  axe: none
+empty        390px  axe: none
+check-hold   390px  axe: none
+reasoning    390px  axe: none
+sources      390px  axe: none
+impact       390px  axe: none
+escalate     390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none.
+EXIT=0
+```
+
+**Final run on the committed code** (`pnpm typecheck && pnpm test && pnpm exec playwright test`, cold build, saved mode):
+```
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+  ok 1 [chromium] › e2e\demo.spec.ts:8:5 › wrong draft → HOLD → blocked send → use safe reply → sent → Impact shows 1 intercept (1.7s)
+  1 passed (1.6m)
+FINAL_EXIT=0
+```
+
+**QA verdict:** APPROVED (re-review, `.loop/qa-findings.md`). QA ran the e2e and the audit itself and looked at every screenshot. It also drove the flows in a browser:
+- B1, B7, B2, B3 and B4 Sources edits give the expected outcomes.
+- Send returns 409, ack-required or 503 as specified.
+- The metrics show the n<3 guard.
+- DOC-105 never appears in the Support agent's DOM.
+- No reason codes appear on the Check tab, and there is no overflow at 400 px.
+- localStorage failures are handled.
+
+**Worktrees:**
+```
+D:/Project/slite 20d9dfd [main]
+```
+
+GATE: PASSED

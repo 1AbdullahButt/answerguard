@@ -1,0 +1,92 @@
+[
+  {
+    "state": "empty",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "check-hold",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "reasoning",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "sources",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "impact",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "escalate",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "empty",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "check-hold",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "reasoning",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "sources",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "impact",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "escalate",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "empty",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "check-hold",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "reasoning",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "sources",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "impact",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "escalate",
+    "width": 390,
+    "violations": []
+  }
+]

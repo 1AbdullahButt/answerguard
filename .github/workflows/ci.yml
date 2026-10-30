@@ -27,3 +27,6 @@ jobs:
       - run: pnpm build
       - name: Saved-response replay reproduces the golden decisions
         run: pnpm eval --saved
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: E2E demo flow (saved mode)
+        run: pnpm e2e

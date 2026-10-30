@@ -193,3 +193,36 @@ never on Check-tab banners; (3) ticket ID and rail chips in the inbox never wrap
 built in the DESIGN.md visual language without a separate mockup. The four defaults in the checkpoint were approved: the
 illustrative rejected-extraction row lives only in the mockup; the AI run block shows the real provider/model; a CAUTION
 recheck shows "Rechecked · Caution" with its reason; a Rail change marks the result stale instead of rerunning.
+
+### D-022 · Phase 3 UI build choices
+1. **Accessible names follow design/UI-CONTRACT.md over DESIGN.md copy where they differ.** The Send button always reads
+   "Send" (DESIGN.md's "Send with caution" would break the exact-name contract); CAUTION shows a triangle icon on Send and the
+   acknowledgement row "I've checked this and want to send it anyway." (contains the contract's checkbox name). The inline
+   button in the blocked-send alert is "Insert safe reply" / "Insert holding reply", so "Use safe reply" stays unique (the panel card).
+2. **One contentinfo landmark.** The disclaimer is a full-width page footer under the inbox and panel, visible on every screen and
+   state. The slide-over and bottom sheet stop above it, so the panel needs no second copy (DESIGN.md's panel footer).
+3. **Impact tiles.** Each metric `group` contains only its value (named by the visible label through `aria-labelledby`); the
+   definitions and the false-alarm n sit outside the group. Drafts checked counts distinct (ticket, FNV-1a draft hash) pairs from
+   any check that returned a decision other than AI_UNAVAILABLE (checks and send rechecks); past flags are deduped by `checkHash`.
+4. **Sources editor saves.** Save draft bumps `version` and sets `updatedAt` only when the text changed; toggles alone (flagged,
+   owner active) are saved without touching `updatedAt`, so flipping a toggle doesn't silently add EDITED_AFTER_VERIFICATION. Choosing
+   "Verified" in the status select sets `verifiedAt = now` (a simulated governance toggle, like Save and verify). Save and verify sets
+   `version + 1`, `verification = verified`, `verifiedAt = updatedAt = now`. A source can also be removed from (and restored to) the
+   workspace, which sends `deleted: true` (B4).
+5. **Staleness.** A result is stale when the draft, rail, persona or workspace differs from the request it came from. Rail and draft
+   changes never rerun automatically (D-021); persona switches and source saves rerun the current ticket's check (DESIGN.md).
+   A fresh check clears an earlier blocked/ack/unavailable send state for that ticket.
+6. **Progress steps** are an honest client-side sequence (the server runs the steps inside one request): "Reading draft" →
+   "Reading N sources" (N = visible, non-removed sources) → "Applying rules", advanced at 350 ms and 900 ms; the result renders as
+   soon as it arrives.
+7. **Hidden HTML comments** in an excluded source (DOC-104's injection line) are shown in the evidence row in mono as
+   "Hidden comment in this doc (data, no effect)", never yellow.
+8. **Fonts.** Inter is self-hosted by `next/font/google` at build time (CSS variable `--font-inter`), falling back to the system stack.
+9. **e2e Impact regex.** (Orchestrator correction.) The builder read an intermediate version of the e2e line where a shell
+   escaping slip had produced `/(^|D)1(D|$)/`. That was fixed to `/(^|\D)1(\D|$)/` before `e2e/` was re-locked; the locked file
+   has the correct regex. The Impact group contains only the value, so it passes either way.
+
+### D-020a · Waiting-marker helper correction
+On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so the marker named a
+   dead PID and never applied. The helper now has `run "<what>" -- <command>`, which records its own PID, runs the command,
+   waits, and removes the marker on exit. The approved rule (running PID + under 30 minutes) is unchanged.

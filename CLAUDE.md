@@ -19,7 +19,7 @@ If the brief and the spec disagree, the spec wins. Amendments to the spec live i
 - Current phase: `.loop/phase` (a single number). Gate status: `PROGRESS.md`, section `## Phase N`, line `GATE: PASSED` plus a fenced evidence block.
 - QA findings: `.loop/qa-findings.md`, ending in `VERDICT: APPROVED` or `VERDICT: CHANGES_REQUIRED`.
 - Human checkpoint: `.loop/await-human.md`. Blocker: `.loop/BLOCKER.md` (after 5 failed attempts on one issue).
-- Long background command: wrap it as `node scripts/waiting.mjs start "<what>"; <command>; node scripts/waiting.mjs stop` so the Stop hook lets you wait (D-020: running PID + under 30 minutes only).
+- Long background command: run it as `node scripts/waiting.mjs run "<what>" -- <command>` so the Stop hook lets you wait (D-020: running PID + under 30 minutes only).
 - Before every commit: `node scripts/precommit-scan.mjs` (also the git pre-commit hook). A secret in the staged diff aborts the commit.
 - Commit and push after each passed gate: `Phase N: gate passed`.
 
