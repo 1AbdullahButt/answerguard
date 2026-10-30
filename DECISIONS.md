@@ -177,3 +177,19 @@ The two `results-<provider>.json` files from that run predate the `runs`/`prompt
 were backfilled from each report's own markdown (same run), and `results.md` was rebuilt with `pnpm eval --combine`.
 The prompt fix that got Gemini there (v2: proposals are claims; quotes exclude markdown labels) didn't change Groq's
 results (Groq also 36/36 on v1).
+
+### D-020 · Stop-hook waiting marker (approved by Abdullah, narrow)
+The Stop hook also allows stopping while `.loop/waiting.json` names a background PID that is still running **and** the file
+is less than 30 minutes old. A missing, malformed, stale or dead-PID marker changes nothing; the hook then behaves exactly as
+before. `scripts/waiting.mjs start "<what>"` records the PID of the shell running a long background command (its first step)
+and `scripts/waiting.mjs stop` removes it (its last step). Background *subagents* have no PID and are not covered. Self-test:
+4 new cases in `scripts/hook-selftest.mjs` (running PID allows; dead PID, stale file, malformed file block).
+
+### D-021 · Phase 3 design approval and changes
+Mockups approved with changes: (1) the Sources editor has no horizontal overflow at 400 px; Cancel, the character counter and
+the "Flagged outdated" label stay fully visible (the action row wraps); (2) decision banner titles stay on one line, truncated
+with an ellipsis if needed, and raw reason codes (e.g. CONTRADICTS_GOVERNING) appear only in the Reasoning tab and raw JSON,
+never on Check-tab banners; (3) ticket ID and rail chips in the inbox never wrap (nowrap + ellipsis); (4) the Impact tab is
+built in the DESIGN.md visual language without a separate mockup. The four defaults in the checkpoint were approved: the
+illustrative rejected-extraction row lives only in the mockup; the AI run block shows the real provider/model; a CAUTION
+recheck shows "Rechecked · Caution" with its reason; a Rail change marks the result stale instead of rerunning.

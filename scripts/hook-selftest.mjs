@@ -2,7 +2,7 @@
 // Self-test for .claude/hooks/protect-locked.mjs and gate-stop.mjs. Runs each hook against
 // synthetic tool inputs inside a temporary project dir and prints the outcome per case.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, utimesSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -68,6 +68,26 @@ writeFileSync(path.join(dir, ".loop", "await-human.md"), "need approval\n");
 r = run(stopHook, {});
 console.log(`${r.stdout === "" ? "PASS" : "FAIL"}  await-human.md → allows`);
 if (r.stdout !== "") failures++;
+
+// D-020 waiting marker: only a running PID in a fresh file allows stopping.
+rmSync(path.join(dir, ".loop", "await-human.md"));
+const waitingJson = path.join(dir, ".loop", "waiting.json");
+const check = (label, want) => {
+  const allowed = run(stopHook, {}).stdout === "";
+  const ok = allowed === want;
+  if (!ok) failures++;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label} → ${allowed ? "allows" : "blocks"}`);
+};
+writeFileSync(waitingJson, JSON.stringify({ pid: process.pid, what: "selftest" }));
+check("waiting.json with a running PID", true);
+writeFileSync(waitingJson, JSON.stringify({ pid: 999999, what: "dead" }));
+check("waiting.json with a dead PID", false);
+writeFileSync(waitingJson, JSON.stringify({ pid: process.pid }));
+const old = new Date(Date.now() - 31 * 60_000);
+utimesSync(waitingJson, old, old);
+check("waiting.json older than 30 minutes", false);
+writeFileSync(waitingJson, "not json");
+check("malformed waiting.json", false);
 
 rmSync(dir, { recursive: true, force: true });
 console.log(`\n${failures === 0 ? "ALL PASS" : `${failures} FAILED`}`);

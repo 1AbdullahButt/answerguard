@@ -2,9 +2,10 @@
 // Stop hook. While the build loop is active (.loop/phase exists), refuses to let the agent stop unless:
 //   - PROGRESS.md's "## Phase N" section has "GATE: PASSED" and at least one fenced evidence block, or
 //   - .loop/await-human.md exists (human checkpoint), or
-//   - .loop/BLOCKER.md exists.
+//   - .loop/BLOCKER.md exists, or
+//   - .loop/waiting.json names a still-running background PID and is under 30 minutes old (D-020).
 // When it blocks, it names the next step of the loop.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 let input = {};
@@ -27,6 +28,29 @@ const phaseRaw = read(p(".loop", "phase")).trim();
 if (!phaseRaw) allow(); // loop not active
 if (existsSync(p(".loop", "await-human.md"))) allow();
 if (existsSync(p(".loop", "BLOCKER.md"))) allow();
+
+// Narrow exception (DECISIONS D-020, approved by Abdullah): waiting on a running background process.
+// Allowed only while .loop/waiting.json names a PID that is still running AND the file is less than 30 minutes old.
+// Anything else (no file, bad JSON, dead PID, stale file) falls through to the normal gate check.
+const waitingFile = p(".loop", "waiting.json");
+if (existsSync(waitingFile)) {
+  try {
+    const { pid } = JSON.parse(readFileSync(waitingFile, "utf8"));
+    const fresh = Date.now() - statSync(waitingFile).mtimeMs < 30 * 60_000;
+    let running = false;
+    if (Number.isInteger(pid) && pid > 0) {
+      try {
+        process.kill(pid, 0); // signal 0: existence check only, sends nothing
+        running = true;
+      } catch (e) {
+        running = e?.code === "EPERM"; // exists but owned by someone else
+      }
+    }
+    if (fresh && running) allow();
+  } catch {
+    /* malformed marker: ignore */
+  }
+}
 
 const phase = Number.parseInt(phaseRaw, 10);
 const progress = read(p("PROGRESS.md")).replace(/\r\n/g, "\n");
