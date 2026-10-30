@@ -2,21 +2,20 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { X } from "lucide-react";
 import { useAnswerGuard } from "@/lib/client/useAnswerGuard";
-import { cx, ui } from "@/components/ui/atoms";
-import { TicketList } from "@/components/inbox/TicketList";
-import { Thread } from "@/components/inbox/Thread";
-import { Composer } from "@/components/inbox/Composer";
-import { SidePanel, DISCLAIMER } from "@/components/panel/SidePanel";
-import { CheckTab } from "@/components/panel/CheckTab";
-import { ReasoningTab } from "@/components/panel/ReasoningTab";
-import { SourcesTab } from "@/components/panel/SourcesTab";
-import { ImpactTab } from "@/components/panel/ImpactTab";
-import { TopBar } from "./TopBar";
-import { GuidedTour, type TourState } from "@/components/tour/GuidedTour";
 import { readJson, writeJson } from "@/lib/client/storage";
-import inbox from "@/components/inbox/inbox.module.css";
+import { mostSevereClaim } from "@/lib/client/format";
+import { cx, ui } from "@/components/ui/atoms";
+import { LeftColumn } from "@/components/inbox/LeftColumn";
+import { ChatCard } from "@/components/inbox/ChatCard";
+import { AgentCard } from "@/components/agent/AgentCard";
+import { CheckView } from "@/components/agent/CheckView";
+import { DocsView } from "@/components/agent/DocsView";
+import { GuidedTour, type TourState } from "@/components/tour/GuidedTour";
+import { Header } from "./Header";
+import { DemoMenu } from "./DemoMenu";
 import s from "./shell.module.css";
 
+export const DISCLAIMER = "Independent concept for Slite Agent · synthetic data · not affiliated with Slite";
 const TOUR_SEEN_KEY = "answerguard.tour.seen.v1";
 
 function useMediaQuery(query: string): boolean {
@@ -51,7 +50,7 @@ function ResetDialog({ edited, onCancel, onConfirm }: { edited: number; onCancel
         aria-describedby="reset-desc"
         onKeyDown={(e) => {
           if (e.key === "Escape") {
-            e.preventDefault(); // handled here: the guided tour must not close too
+            e.preventDefault();
             onCancel();
           }
           if (e.key === "Tab") {
@@ -68,15 +67,15 @@ function ResetDialog({ edited, onCancel, onConfirm }: { edited: number; onCancel
           }
         }}
       >
-        <h2 id="reset-title">Reset workspace?</h2>
+        <h2 id="reset-title">Reset the demo?</h2>
         <p id="reset-desc">
-          Restores all seed sources ({edited} edited) and clears this browser&apos;s metrics. This can&apos;t be undone.
+          Restores every seed doc ({edited} edited) and clears this browser&apos;s numbers. This can&apos;t be undone.
         </p>
         <div className={s.dialogActions}>
-          <button ref={cancelRef} type="button" className={ui.btn} onClick={onCancel}>
+          <button ref={cancelRef} type="button" className={cx(ui.btn, ui.outline, ui.sm)} onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className={cx(ui.btn, s.danger)} onClick={onConfirm}>
+          <button type="button" className={cx(ui.btn, ui.primary, ui.sm)} onClick={onConfirm}>
             Reset and clear
           </button>
         </div>
@@ -89,34 +88,37 @@ export function App() {
   const ag = useAnswerGuard();
   const { actions } = ag;
   const overlay = useMediaQuery("(max-width: 1099px)");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [sheetFull, setSheetFull] = useState(false);
-  const triggerRef = useRef<HTMLElement | null>(null);
   const [tour, setTour] = useState<TourState | null>(null);
   const tourBtnRef = useRef<HTMLButtonElement>(null);
   const tourReturnRef = useRef<HTMLElement | null>(null);
+  const agentReturnRef = useRef<HTMLElement | null>(null);
   const dismissRef = useRef(actions.dismissToast);
   dismissRef.current = actions.dismissToast;
 
-  const openPanel = useCallback(() => {
+  const openAgent = useCallback(() => {
     if (!overlay) return;
-    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!ag.panelOpen) agentReturnRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     actions.setPanelOpen(true);
-  }, [overlay, actions]);
+  }, [overlay, ag.panelOpen, actions]);
 
-  const closePanel = useCallback(() => {
+  const closeAgent = useCallback(() => {
     actions.setPanelOpen(false);
-    setSheetFull(false);
-    triggerRef.current?.focus();
+    agentReturnRef.current?.focus();
   }, [actions]);
 
-  const onCheck = useCallback(() => {
-    actions.setTab("check");
-    openPanel();
-    void actions.runCheck();
-  }, [actions, openPanel]);
+  // Under 1100 px the agent card is a slide-over / bottom sheet: open it whenever Send starts a check or one finishes.
+  const sendKind = ag.sendState.kind;
+  const checkingNow = ag.checking !== null;
+  useEffect(() => {
+    if (!overlay) return;
+    if (checkingNow || sendKind === "blocked" || sendKind === "ack_required" || sendKind === "unavailable" || sendKind === "sent") {
+      actions.setPanelOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overlay, checkingNow, sendKind]);
 
-  // Toasts dismiss themselves.
   useEffect(() => {
     if (!ag.toast) return;
     const t = window.setTimeout(dismissRef.current, 4000);
@@ -136,6 +138,7 @@ export function App() {
 
   const startTour = useCallback(() => {
     writeJson(TOUR_SEEN_KEY, true);
+    setMenuOpen(false);
     setTour({ mode: "tour", step: 0 });
   }, []);
 
@@ -150,129 +153,125 @@ export function App() {
 
   const closeTour = useCallback(() => {
     setTour(null);
-    const back = tourReturnRef.current;
-    (back && document.contains(back) ? back : tourBtnRef.current)?.focus();
+    // Return focus to the trigger; on phones the header tour pill is hidden, so fall back to the Demo menu button.
+    const visible = (el: HTMLElement | null | undefined) => !!el && document.contains(el) && el.offsetParent !== null;
+    const candidates = [tourReturnRef.current, tourBtnRef.current, document.querySelector<HTMLElement>("[data-demo-menu-trigger]")];
+    candidates.find(visible)?.focus();
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    document.querySelector<HTMLElement>("[data-demo-menu-trigger]")?.focus();
   }, []);
 
   const ticket = ag.ticket;
+  const governingId = ag.stored ? (mostSevereClaim(ag.stored.result)?.governing?.sourceId ?? null) : null;
 
-  let panelContent = null;
-  if (ag.tab === "check") {
-    panelContent = (
-      <CheckTab
-        draft={ag.draft}
-        stored={ag.stored}
-        staleReason={ag.staleReason}
-        checking={ag.checking}
-        sources={ag.effectiveSources}
-        pausedVisible={!ag.pausedDismissed}
-        onDismissPaused={actions.dismissPaused}
-        onRecheck={onCheck}
-        onWhy={() => actions.setTab("reasoning")}
-        onRestoreSeed={actions.restoreSeedVersions}
-        onUseSafe={actions.applySafeReply}
-      />
-    );
-  } else if (ag.tab === "reasoning") {
-    panelContent = (
-      <ReasoningTab
-        stored={ag.stored}
-        staleReason={ag.staleReason}
-        sources={ag.effectiveSources}
-        onOpenQuote={actions.openQuote}
-        onRecheck={onCheck}
-      />
-    );
-  } else if (ag.tab === "sources") {
-    panelContent = (
-      <SourcesTab
-        role={ag.role}
-        sources={ag.effectiveSources}
-        deleted={ag.deletedSources}
-        overrides={ag.overrides}
-        focus={ag.sourceFocus}
-        onSave={actions.saveSource}
-        onRemove={actions.deleteSource}
-        onRestore={actions.restoreSource}
-        onClearFocus={actions.clearSourceFocus}
-      />
-    );
-  } else {
-    panelContent = <ImpactTab metrics={ag.metrics} onReview={actions.review} />;
-  }
+  const useReply = () => {
+    actions.applySafeReply();
+    // On phones/tablets the sheet hides the composer; close it so the new reply and Send are in view.
+    if (overlay) actions.setPanelOpen(false);
+  };
 
   return (
     <div className={s.app}>
-      <TopBar
-        ref={tourBtnRef}
-        role={ag.role}
-        onRole={(r) => void actions.switchRole(r)}
-        onReset={() => setConfirmReset(true)}
-        onTour={toggleTour}
-        tourOpen={tour !== null}
-        ai={ag.lastAi}
-      />
-      <div className={cx(s.main, ag.mobileView === "list" ? inbox.viewList : inbox.viewThread)}>
+      <Header ref={tourBtnRef} menuOpen={menuOpen} onMenu={() => setMenuOpen((o) => !o)} onTour={toggleTour} tourOpen={tour !== null}>
+        {menuOpen ? (
+          <DemoMenu
+            role={ag.role}
+            onRole={(r) => void actions.switchRole(r)}
+            metrics={ag.metrics}
+            onReview={actions.review}
+            ai={ag.lastAi}
+            onTour={() => {
+              tourReturnRef.current = tourBtnRef.current;
+              startTour();
+            }}
+            onReset={() => setConfirmReset(true)}
+            onClose={closeMenu}
+          />
+        ) : null}
+      </Header>
+
+      <div className={s.body}>
         {ag.seedError && !ag.seed ? (
-          <div className={s.seedError} role="alert" style={{ gridColumn: "1 / -1" }}>
-            <p>Couldn&apos;t load the demo workspace: {ag.seedError}</p>
+          <div className={s.seedError} role="alert">
+            <p>Couldn&apos;t load the demo: {ag.seedError}</p>
             <button type="button" className={cx(ui.btn, ui.primary)} onClick={() => void actions.loadSeed()}>
-              Retry
+              Try again
             </button>
           </div>
         ) : (
           <>
-            <TicketList
+            <LeftColumn
               tickets={ag.tickets}
-              selectedId={ticket?.id ?? ""}
-              rails={ag.railOf}
+              ticket={ticket}
+              rail={ag.rail}
+              onRail={actions.setRail}
+              railOf={ag.railOf}
               results={ag.results}
+              sendStateOf={ag.sendStateOf}
               isStale={ag.isStale}
               onSelect={actions.selectTicket}
             />
             {ticket ? (
-              <Thread ticket={ticket} rail={ag.rail} onRail={actions.setRail} sent={ag.sent} onBack={() => actions.setMobileView("list")}>
-                <Composer
-                  customer={ticket.customer}
-                  draft={ag.draft}
-                  onChange={actions.setDraft}
-                  onCheck={onCheck}
-                  onSend={() => void actions.send()}
-                  checking={ag.checking !== null}
-                  sendState={ag.sendState}
+              <ChatCard
+                ticket={ticket}
+                rail={ag.rail}
+                onRail={actions.setRail}
+                draft={ag.draft}
+                onDraft={actions.setDraft}
+                onSend={() => void actions.send()}
+                sendState={ag.sendState}
+                checking={ag.checking !== null}
+                sent={ag.sent}
+                stored={ag.stored}
+                overlay={overlay}
+                agentOpen={ag.panelOpen}
+                onToggleAgent={() => (ag.panelOpen ? closeAgent() : openAgent())}
+              />
+            ) : (
+              <main className={s.body} aria-label="Conversation" aria-busy="true" />
+            )}
+            {overlay && ag.panelOpen ? <div className={s.scrim} onClick={closeAgent} aria-hidden="true" /> : null}
+            <AgentCard tab={ag.tab} onTab={actions.setTab} overlay={overlay} open={ag.panelOpen} onClose={closeAgent}>
+              {ag.tab === "check" ? (
+                <CheckView
                   stored={ag.stored}
                   staleReason={ag.staleReason}
+                  rail={ag.rail}
+                  checking={ag.checking}
+                  sendState={ag.sendState}
                   ack={ag.ack}
                   onAck={actions.setAck}
-                  onInsertSafe={actions.applySafeReply}
-                  panelOpen={ag.panelOpen}
-                  onTogglePanel={() => (ag.panelOpen ? closePanel() : openPanel())}
+                  onSendAnyway={() => void actions.send({ acknowledged: true })}
+                  onTryAgain={() => void (ag.sendState.kind === "unavailable" ? actions.send() : actions.runCheck())}
+                  onUseReply={useReply}
+                  view={ag.view}
+                  onView={actions.setView}
+                  onOpenDoc={actions.openDoc}
+                  intercepts={ag.metrics.intercepts}
+                  pausedVisible={!ag.pausedDismissed}
                 />
-              </Thread>
-            ) : (
-              <main className={inbox.thread} aria-label="Conversation" aria-busy="true" />
-            )}
-            {overlay && ag.panelOpen ? <div className={s.scrimOn} onClick={closePanel} aria-hidden="true" /> : null}
-            <SidePanel
-              tab={ag.tab}
-              onTab={actions.setTab}
-              sourceCount={ag.effectiveSources.length}
-              overlay={overlay}
-              open={ag.panelOpen}
-              full={sheetFull}
-              onToggleFull={() => setSheetFull((f) => !f)}
-              onClose={closePanel}
-              onRecheck={onCheck}
-              canRecheck={Boolean(ag.draft.trim())}
-            >
-              {panelContent}
-            </SidePanel>
+              ) : (
+                <DocsView
+                  sources={ag.effectiveSources}
+                  deleted={ag.deletedSources}
+                  edited={(id) => ag.overrides[id] !== undefined}
+                  focusId={ag.docFocus?.sourceId ?? null}
+                  preferredId={governingId}
+                  onSave={actions.saveSource}
+                  onRemove={actions.deleteSource}
+                  onRestore={actions.restoreSource}
+                />
+              )}
+            </AgentCard>
           </>
         )}
       </div>
-      <footer className={s.footer}>
-        <span>{DISCLAIMER}</span>
-      </footer>
+
+      <footer className={s.footer}>{DISCLAIMER}</footer>
+
       {ag.toast ? (
         <div className={s.toast} role="alert" key={ag.toast.id}>
           <span>{ag.toast.message}</span>
@@ -297,6 +296,7 @@ export function App() {
           onCancel={() => setConfirmReset(false)}
           onConfirm={() => {
             setConfirmReset(false);
+            setMenuOpen(false);
             actions.resetWorkspace();
           }}
         />

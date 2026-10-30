@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnswerGuard · Checking</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F434A}a:hover{color:#2D2F34}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 420px; height: 900px; box-sizing: border-box; padding: 20px; background: #FDF9F4; font-family: Figtree, system-ui, sans-serif; color: #3F434A; font-size: 15px; line-height: 1.45; display: flex; flex-direction: column; gap: 16px">
+  <aside aria-label="Slite Agent, checking" style="background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <div style="width: 28px; height: 28px; border-radius: 9px; background: #F67748; display: flex; align-items: center; justify-content: center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path></svg>
+      </div>
+      <span style="font-weight: 700; color: #2D2F34">Slite Agent</span>
+    </div>
+    <span style="font-size: 22px; font-weight: 700; color: #2D2F34">Checking your reply…</span>
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 26px; height: 26px; border-radius: 999px; background: #ECF4ED; color: #2E6B45; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+        <span>Reading your reply</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="width: 26px; height: 26px; border-radius: 999px; border: 2.5px solid #F67748; border-right-color: #FBD9CB; box-sizing: border-box"></span>
+        <span style="font-weight: 600; color: #2D2F34">Reading 4 docs</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; color: #5E646E">
+        <span style="width: 26px; height: 26px; border-radius: 999px; border: 2px dashed #D6D2CB; box-sizing: border-box"></span>
+        <span>Applying the rules</span>
+      </div>
+    </div>
+    <span style="font-size: 13px; color: #5E646E">Send is paused until the check finishes, usually about 2 seconds.</span>
+  </aside>
+
+  <aside aria-label="AI unavailable" style="background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <span style="font-size: 13px; font-weight: 600; color: #5E646E; text-transform: uppercase; letter-spacing: .04em">If the AI can’t be reached</span>
+    <div style="border-radius: 20px; background: #F6F7F9; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #3F434A; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Couldn’t check</span>
+      <span style="font-size: 20px; font-weight: 700; color: #2D2F34; line-height: 1.2">Not sent, nothing was lost</span>
+      <p style="margin: 0">The AI didn’t answer, so this reply can’t be checked yet. Try again, or remove the timeline from your reply.</p>
+    </div>
+    <button style="height: 48px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Try again</button>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":420,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

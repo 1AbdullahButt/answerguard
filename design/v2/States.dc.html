@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnswerGuard · The four outcomes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F434A}a:hover{color:#2D2F34}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1320px; height: 620px; box-sizing: border-box; padding: 40px; background: #FDF9F4; font-family: Figtree, system-ui, sans-serif; color: #3F434A; font-size: 15px; line-height: 1.45; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; align-items: start">
+
+  <div style="background: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="border-radius: 20px; background: #ECF4ED; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #2E6B45; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Good to send</span>
+      <span style="font-size: 21px; font-weight: 700; color: #2D2F34; line-height: 1.2">Your reply is right</span>
+      <p style="margin: 0">Standard transfers reverse in 4 business days. Your reply matches.</p>
+    </div>
+    <button style="height: 48px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Send</button>
+    <span style="font-size: 13px; color: #5E646E">Hina · standard transfer</span>
+  </div>
+
+  <div style="background: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="border-radius: 20px; background: #FEF3DC; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #6B4A00; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Double-check</span>
+      <span style="font-size: 21px; font-weight: 700; color: #2D2F34; line-height: 1.2">Right today, changing soon</span>
+      <p style="margin: 0">Your reply matches the policy, but a change to 1 day is pending sign-off.</p>
+    </div>
+    <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px"><input type="checkbox" style="margin-top: 3px; width: 16px; height: 16px"> I’ve checked and want to send it</label>
+    <button style="height: 48px; border-radius: 999px; border: 1.5px solid #2D2F34; background: transparent; color: #2D2F34; font-size: 15px; font-weight: 600; cursor: pointer">Send anyway</button>
+  </div>
+
+  <div style="background: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="border-radius: 20px; background: #FCEDEA; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #8F2A1C; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Hold</span>
+      <span style="font-size: 21px; font-weight: 700; color: #2D2F34; line-height: 1.2">Don’t send this yet</span>
+      <p style="margin: 0">Instant transfers now reverse in 1 business day. Your reply says 4.</p>
+    </div>
+    <button style="height: 48px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Use this reply</button>
+    <span style="font-size: 13px; color: #5E646E">Ayesha · instant transfer</span>
+  </div>
+
+  <div style="background: #FFFFFF; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="border-radius: 20px; background: #F2F2FA; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #4552B8; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Ask first</span>
+      <span style="font-size: 21px; font-weight: 700; color: #2D2F34; line-height: 1.2">Depends on the transfer</span>
+      <p style="margin: 0">Instant and standard transfers differ, and this ticket doesn’t say which.</p>
+    </div>
+    <button style="height: 48px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Use holding reply</button>
+    <span style="font-size: 13px; color: #5E646E">Usman · rail unknown</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1320,"height":620}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

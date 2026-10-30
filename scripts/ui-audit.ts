@@ -1,8 +1,9 @@
-// Phase 3 gate helper: screenshots of the key states at 1440 / 1024 / 390 px plus an axe-core accessibility scan,
-// against an already-running app (default http://127.0.0.1:3100, AI_MODE=saved). Uses only the UI-contract names.
+// UI gate helper (design v2): screenshots of the key states at 1440 / 1024 / 390 px plus an axe-core accessibility scan,
+// against an already-running app (default http://127.0.0.1:3100, AI_MODE=saved). Uses only design/v2/UI-CONTRACT.md names.
 //   pnpm tsx scripts/ui-audit.ts [baseUrl]
 //   pnpm tsx scripts/ui-audit.ts --serve      start `pnpm start -p 3100` (AI_MODE=saved) first, stop it afterwards
-// Writes design/audit/<state>-<width>.png and design/audit/axe.json; exits 1 on any serious/critical axe violation.
+// Writes design/audit/<state>-<width>.png and design/audit/axe.json; exits 1 on any serious/critical axe violation or
+// horizontal page scroll.
 import AxeBuilder from "@axe-core/playwright";
 import { chromium, type Page } from "@playwright/test";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
@@ -30,11 +31,11 @@ async function startServer(): Promise<ChildProcess> {
 }
 
 function stopServer(child: ChildProcess) {
-  // On Windows the shell wrapper's PID owns the tree.
-  // Synchronous, so the tree is gone before this script exits.
+  // On Windows the shell wrapper's PID owns the tree. Synchronous, so the tree is gone before this script exits.
   if (process.platform === "win32" && child.pid) spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
   else child.kill();
 }
+
 const outDir = path.join(process.cwd(), "design", "audit");
 const widths = [1440, 1024, 390];
 const DRAFT = "Failed transfers are reversed within 4 business days.";
@@ -45,66 +46,105 @@ interface AxeSummary {
   violations: Array<{ id: string; impact: string | null | undefined; help: string; nodes: number }>;
 }
 
-/** On narrow screens the panel is a slide-over / bottom sheet; open it if a toggle exists. */
-async function openPanel(page: Page) {
-  const panel = page.getByRole("complementary", { name: "Slite Agent · AnswerGuard" });
-  if (await panel.isVisible().catch(() => false)) return;
-  const toggle = page.getByRole("button", { name: /Open AnswerGuard panel/i }).first();
-  // On phones the panel toggle lives in the composer, which appears once a conversation is open.
-  if (!(await toggle.isVisible().catch(() => false))) {
-    await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Ayesha K\./ }).click();
-  }
-  if (await toggle.isVisible().catch(() => false)) await toggle.click();
+async function openConversation(page: Page, name: RegExp) {
+  await page.getByRole("navigation", { name: "Conversations" }).getByRole("button", { name }).click();
 }
 
-async function checkHold(page: Page) {
-  await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Ayesha K\./ }).click();
-  await page.getByRole("textbox", { name: "Reply to customer" }).fill(DRAFT);
-  await page.getByRole("button", { name: "Check answer", exact: true }).click();
-  await openPanel(page);
+/** Under 1100 px the Slite Agent card is a slide-over / bottom sheet; open it if it's closed. */
+async function openAgent(page: Page) {
+  const tab = page.getByRole("tab", { name: "Check", exact: true });
+  if (await tab.isVisible().catch(() => false)) return;
+  const toggle = page.getByRole("button", { name: /Slite Agent$/ }).first();
+  if (await toggle.isVisible().catch(() => false)) await toggle.click();
+  await tab.waitFor({ timeout: 5_000 });
+}
+
+/** Send runs the check (POST /api/send). */
+async function sendDraft(page: Page, name: RegExp, draft = DRAFT) {
+  await openConversation(page, name);
+  await page.getByRole("textbox", { name: "Your reply" }).fill(draft);
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+}
+
+async function held(page: Page) {
+  await sendDraft(page, /Ayesha K\./);
   await page.getByRole("region", { name: "Decision" }).getByText("Hold").first().waitFor({ timeout: 20_000 });
 }
 
 const states: Array<{ name: string; run: (page: Page) => Promise<void> }> = [
   { name: "empty", run: async () => {} },
-  { name: "check-hold", run: checkHold },
+  { name: "held", run: held },
   {
-    name: "reasoning",
+    name: "why",
     run: async (page) => {
-      await checkHold(page);
-      await page.getByRole("tab", { name: "Reasoning", exact: true }).click();
+      await held(page);
+      await page.getByRole("button", { name: "Why?", exact: true }).click();
+      await page.getByRole("button", { name: "See the full rule trace" }).waitFor();
     },
   },
   {
-    name: "sources",
+    name: "trace",
     run: async (page) => {
-      await openPanel(page);
-      await page.getByRole("tab", { name: "Sources", exact: true }).click();
+      await held(page);
+      await page.getByRole("button", { name: "Why?", exact: true }).click();
+      await page.getByRole("button", { name: "See the full rule trace" }).click();
+      await page.getByRole("button", { name: "Raw JSON" }).click();
     },
   },
   {
-    name: "impact",
+    name: "docs",
     run: async (page) => {
-      await openPanel(page);
-      await page.getByRole("tab", { name: "Impact", exact: true }).click();
+      await openAgent(page);
+      await page.getByRole("tab", { name: "Docs", exact: true }).click();
+      const text = page.getByRole("textbox", { name: "Document text" });
+      await text.fill((await text.inputValue()).replace("1 business day", "2 business days"));
     },
   },
   {
-    // Editing the draft after a check makes the inbox pill stale (Phase 4 QA: it must keep AA contrast).
-    name: "stale",
+    // Variant B7 through the UI: DOC-103 → 2 business days with "Save and re-check" → Double-check.
+    name: "double-check",
     run: async (page) => {
-      await checkHold(page);
-      await page.getByRole("textbox", { name: "Reply to customer" }).fill(`${DRAFT} Thanks!`);
+      await held(page);
+      await openAgent(page);
+      await page.getByRole("tab", { name: "Docs", exact: true }).click();
+      const text = page.getByRole("textbox", { name: "Document text" });
+      await text.fill((await text.inputValue()).replace("1 business day", "2 business days"));
+      await page.getByRole("button", { name: "Save and re-check", exact: true }).click();
+      await page.getByRole("checkbox", { name: "I've checked and want to send it" }).waitFor({ timeout: 20_000 });
     },
   },
   {
-    name: "escalate",
+    name: "ask-first",
     run: async (page) => {
-      await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Usman R\./ }).click();
-      await page.getByRole("textbox", { name: "Reply to customer" }).fill(DRAFT);
-      await page.getByRole("button", { name: "Check answer", exact: true }).click();
-      await openPanel(page);
-      await page.getByRole("region", { name: "Decision" }).getByText("Escalate").first().waitFor({ timeout: 20_000 });
+      await sendDraft(page, /Usman R\./);
+      await page.getByRole("region", { name: "Decision" }).getByText("Ask first").first().waitFor({ timeout: 20_000 });
+    },
+  },
+  {
+    // A draft with no saved AI response in AI_MODE=saved → 503 → "Not sent" + "Try again".
+    name: "not-sent",
+    run: async (page) => {
+      await sendDraft(page, /Hina S\./, "Your refund should arrive in 3 working days.");
+      await page.getByRole("button", { name: "Try again", exact: true }).waitFor({ timeout: 20_000 });
+    },
+  },
+  {
+    name: "sent",
+    run: async (page) => {
+      await held(page);
+      await page.getByRole("button", { name: "Use this reply", exact: true }).click();
+      await page.getByRole("button", { name: "Send", exact: true }).click();
+      await page.getByRole("status").filter({ hasText: "Sent · checked by Slite Agent" }).waitFor({ timeout: 20_000 });
+    },
+  },
+  {
+    name: "demo-menu",
+    run: async (page) => {
+      await held(page);
+      const close = page.getByRole("button", { name: "Close Slite Agent" });
+      if (await close.isVisible().catch(() => false)) await close.click();
+      await page.getByRole("button", { name: "Demo menu", exact: true }).click();
+      await page.getByRole("dialog", { name: "Demo menu" }).waitFor();
     },
   },
 ];
@@ -116,6 +156,7 @@ async function main() {
   const summaries: AxeSummary[] = [];
   let serious = 0;
   const overflow: string[] = [];
+  const failed: string[] = [];
   for (const width of widths) {
     for (const state of states) {
       const context = await browser.newContext({ viewport: { width, height: width < 700 ? 844 : 900 } });
@@ -125,9 +166,10 @@ async function main() {
       try {
         await state.run(page);
       } catch (e) {
+        failed.push(`${state.name}@${width}`);
         console.log(`! ${state.name}@${width}: ${e instanceof Error ? e.message.split("\n")[0] : String(e)}`);
       }
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(350);
       await page.screenshot({ path: path.join(outDir, `${state.name}-${width}.png`), fullPage: false });
       const hScroll = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       if (hScroll) overflow.push(`${state.name}@${width}`);
@@ -135,15 +177,19 @@ async function main() {
       const violations = axe.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length }));
       serious += violations.filter((v) => v.impact === "serious" || v.impact === "critical").length;
       summaries.push({ state: state.name, width, violations });
-      console.log(`${state.name.padEnd(11)} ${String(width).padStart(4)}px  axe: ${violations.length ? violations.map((v) => `${v.id}(${v.impact}×${v.nodes})`).join(", ") : "none"}${hScroll ? "  ⚠ horizontal scroll" : ""}`);
+      console.log(
+        `${state.name.padEnd(13)} ${String(width).padStart(4)}px  axe: ${violations.length ? violations.map((v) => `${v.id}(${v.impact}×${v.nodes})`).join(", ") : "none"}${hScroll ? "  ⚠ horizontal scroll" : ""}`,
+      );
       await context.close();
     }
   }
   await browser.close();
   if (server) stopServer(server);
   writeFileSync(path.join(outDir, "axe.json"), JSON.stringify(summaries, null, 2));
-  console.log(`\nSerious/critical axe violations: ${serious}. Horizontal page scroll: ${overflow.length ? overflow.join(", ") : "none"}.`);
-  process.exit(serious === 0 && overflow.length === 0 ? 0 : 1);
+  console.log(
+    `\nSerious/critical axe violations: ${serious}. Horizontal page scroll: ${overflow.length ? overflow.join(", ") : "none"}. States that failed to reach: ${failed.length ? failed.join(", ") : "none"}.`,
+  );
+  process.exit(serious === 0 && overflow.length === 0 && failed.length === 0 ? 0 : 1);
 }
 
 void main();

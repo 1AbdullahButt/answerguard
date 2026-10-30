@@ -40,7 +40,7 @@ This concept tests something narrower, and it is presented as a hypothesis (Slit
 | Word the safe reply from given facts | Recheck the safe reply; fall back to a template if it fails |
 
 **The AI never decides the outcome.** The decision is a pure function, `decide(extractions, sources, ticket, now)` in
-[`lib/engine/decide.ts`](lib/engine/decide.ts). Every rule writes a trace entry that the Reasoning tab shows.
+[`lib/engine/decide.ts`](lib/engine/decide.ts). Every rule writes a trace entry, shown in the Slite Agent card's Why and Trace views.
 "The AI found nothing" is never treated as "safe": a deterministic policy-pattern detector catches timelines the AI missed,
 and an unreadable source caps the result at Caution.
 

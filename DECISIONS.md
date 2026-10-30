@@ -279,3 +279,73 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
   limitation: the in-memory limiter isn't shared across serverless instances (SPEC §10.3).
 - The Gemini key on this account uses a newer non-`AIza` format; the pre-commit scan still catches it via the env-style
   `GEMINI_API_KEY=` pattern, but a bare value of that format in code wouldn't be recognised by prefix.
+
+### D-026 · Phase 5: Design v2 restyle (approved by Abdullah)
+- **Why:** the v1 UI did too much at once. Design v2 (`design/v2/*.dc.html`, 9 artboards) simplifies it; the rules engine,
+  AI pipeline, API and engine tests are unchanged.
+- **Send runs the check.** The separate "Check answer" button and Ctrl+Enter hint are gone; Send calls the existing
+  `/api/send` integrity path (ALLOW sends; HOLD/ESCALATE are held and counted as intercepts; CAUTION needs the
+  acknowledgement + "Send anyway"; AI unavailable shows "Not sent, nothing was lost" + "Try again").
+- **Two tabs:** Check and Docs. "Why?" and the full rule trace open inside Check (with a back button); Reasoning and
+  Impact are no longer tabs; Impact, personas, reset and the AI mode line live in the Demo menu.
+- **Plain outcome names in the UI:** ALLOW "Good to send", CAUTION "Double-check", HOLD "Hold", ESCALATE "Ask first".
+  Engine names and reason codes appear only in the Trace and Raw JSON.
+- **One-time unlock of the demo test (approved by Abdullah):** the UI flow changed (Send is now the check), so the demo
+  test folder was removed from `.loop/locked`, its spec is rewritten to cover the same journey (wrong draft → Send → held,
+  counted as an intercept → Use this reply → Send → sent → Demo menu shows 1 stopped) against `design/v2/UI-CONTRACT.md`,
+  reviewed by QA against the old test, and then re-locked. The engine tests, SPEC.md, the brief and the seed stay locked.
+
+### D-027 · Phase 5 build choices (design v2)
+1. **Structure.** v1 panel components are removed (Reasoning/Impact tabs, banner, chips, evidence rows, side panel, ticket list,
+   thread, composer, top bar, role switch, mode badge). New: `components/inbox/{LeftColumn,ChatCard,RailSelect}`,
+   `components/agent/{AgentCard,CheckView,WhyView,TraceView,DocsView}`, `components/shell/{Header,DemoMenu,App}`. The client
+   state hook, overrides/metrics storage, persona filter, saved-response behaviour and stale marking are kept.
+2. **All v2 copy is generated from the real `CheckResult`** in `lib/client/outcome.ts` (pure): outcome names, headlines, the one
+   sentence, the Why model and the trace rows. Nothing is hard-coded per scenario. Engine names and reason codes only appear in
+   the Trace view (decision pill, reason-code chip, rule IDs, rule details) and Raw JSON.
+3. **Headlines** follow item 7. Two cases the prompt doesn't name get their own plain line instead of a misleading one: ESCALATE
+   `CONFLICT_UNRESOLVED` (B3) reads "Your docs disagree" (not "Depends on the transfer", which would be false when the rail is known),
+   and CAUTION reasons other than `CHANGE_SIGNALLED` use a short reason line (e.g. B7 `WEAK_BASIS`: "The doc behind this changed").
+   The generated sentence names the ticket's own transfer type when the rail is known ("Standard transfers reverse in 4 business days").
+4. **Send runs the check.** `send()` shows the three progress steps while `/api/send` runs. 409 → held (tag "Held by Slite Agent:
+   see the panel" as a `status`, disabled "Send (held)", intercept counted); 428 → "I've checked and want to send it" + "Send anyway"
+   (disabled until ticked; also shown when a Docs re-check returns CAUTION); 503 → "Not sent, nothing was lost" + "Try again"
+   (re-sends; after a Docs re-check it re-checks). Any composer edit, including "Use this reply", clears the held state. Only the
+   latest sent bubble carries the `status` "Sent · checked by Slite Agent", so the confirmation is unique and announced once.
+5. **Sent payoff** uses the real customer first name and the held draft's value as a compound adjective ("Ayesha got the right
+   answer" / "The 4-business-day reply never reached Ayesha.") — the name instead of a pronoun. Shown only when the successful send
+   followed a held draft on that ticket; otherwise "Sent to <Name>". "Wrong replies stopped today" shows `metrics.intercepts`.
+6. **ALLOW card has no in-card Send button** (the States artboard shows one): a second button named "Send" would make the contract's
+   exact "Send" ambiguous. Users send from the composer. ESCALATE uses "Use holding reply" (States artboard); HOLD "Use this reply".
+7. **Demo menu** is a non-modal popover `dialog` named "Demo menu" (focus moves to its title, Esc and outside clicks close it, focus
+   returns to the trigger). It also holds "Review flagged replies" (Correct catch / False alarm), since SPEC §11's false-alarm rate
+   needs reviews and the Impact tab is gone. The persona note keeps SPEC §8's meaning in shorter words. "How it works · GitHub" opens
+   `/how-it-works`, a static page that renders README.md at build time (the repo is private, so it isn't linked).
+8. **Docs tab** keeps SPEC §9's toggles (verification, owner active, flagged outdated) and remove/restore inside a collapsed "Doc
+   settings", so the artboard's layout stays clean. "Save and re-check" = old Save draft (disabled until something changes).
+9. **Responsive.** One DOM, CSS-driven. Under 1100 px the left column becomes a row (compact customer card + conversation pills)
+   and the agent card a slide-over that opens when Send starts a check; a "Slite Agent" pill in the chat header reopens it. Under
+   700 px: the dark title card (with the rail picker), conversation pills, chat, and the agent card as a bottom sheet above the
+   footer; the held draft also shows as a dashed bubble (Mobile artboard). "Use this reply" closes the sheet so the composer and
+   Send are in view. The header's Demo menu reads "Demo" on phones (accessible name stays "Demo menu"); the Guided tour pill is
+   hidden there and the tour starts from the Demo menu.
+10. **Tour (5 steps, Send is the check):** Send (button "Press Send for me") → Why (opens Why?) → Use this reply and send → Ask first
+    (TCK-9002, "Press Send for me") → Docs B7 edit (button "Apply the edit (2 business days)"; step 5 re-checks the canonical draft
+    first, which is a check, not a send). Nothing sends or edits without a button press; no auto-offer under `navigator.webdriver`.
+11. **Fonts and tokens:** Figtree 400–700 and JetBrains Mono (trace rule IDs only) via `next/font/google`. Focus is an ink ring with a
+    white gap, never the accent. Contrast ratios: `design/v2/DESIGN-NOTES.md`.
+12. `scripts/ui-audit.ts` now uses the v2 contract and states: empty, held, why, trace, docs, double-check, ask-first, not-sent,
+    sent, demo-menu (and fails if a state can't be reached).
+
+### D-028 · Phase 5 QA minors and spec deltas from design v2
+- **SPEC §11 amendment (design v2, approved via the DemoMenu artboard):** Impact now lives in the Demo menu as three tiles
+  ("Replies checked", "Wrong ones stopped", "False alarms (need 3 reviews)") with the line "Simulated in your browser, not
+  real Slite data." The per-metric one-line definitions and the explicit n are no longer shown; the n<3 guard remains (the
+  tile shows "–" until 3 flags are reviewed). Metric semantics are unchanged.
+- **SPEC §7 delta:** rejected extractions, the prompt version and per-source standing rules/relations are in the Trace view's
+  Raw JSON rather than as separate rows; the fired rule is highlighted. Accepted as part of the "less at once" brief.
+- Composer boundary uses `--field-line` #8B9099 (3.21:1 on white, WCAG 1.4.11) instead of the artboard's #E8E3DB (1.28:1).
+- The Demo menu link reads "How it works" (it opens the in-app README page; the repo is private). `/how-it-works` renders
+  README images from `public/` (the GIF is mirrored to `public/demo.gif`).
+- README: "Reasoning tab" → Why and Trace views; `docs/demo.gif` re-recorded for the v2 flow.
+- Known, not fixed: at 390 px the open bottom sheet's scrim covers the header, so "Demo" needs the sheet closed first (×/Esc).

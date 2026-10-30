@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnswerGuard · Demo menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F434A}a:hover{color:#2D2F34}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 420px; height: 760px; box-sizing: border-box; padding: 20px; background: #FDF9F4; font-family: Figtree, system-ui, sans-serif; color: #3F434A; font-size: 15px; line-height: 1.45; display: flex">
+  <div role="dialog" aria-label="Demo menu" style="flex: 1; background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 12px 32px rgba(45,47,52,.12)">
+    <span style="font-size: 20px; font-weight: 700; color: #2D2F34">Demo</span>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; color: #5E646E; text-transform: uppercase; letter-spacing: .04em">Viewing as</span>
+      <div style="display: flex; gap: 4px; background: #F6F7F9; border-radius: 999px; padding: 4px">
+        <button style="flex: 1; height: 38px; border: none; border-radius: 999px; background: #FFFFFF; color: #2D2F34; font-size: 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer">Support agent</button>
+        <button style="flex: 1; height: 38px; border: none; border-radius: 999px; background: transparent; color: #5E646E; font-size: 14px; cursor: pointer">Ops lead</button>
+      </div>
+      <span style="font-size: 13px; color: #5E646E">Simulated roles. Ops lead also sees one restricted doc.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; color: #5E646E; text-transform: uppercase; letter-spacing: .04em">Impact · this session</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <div style="background: #FDF9F4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column"><span style="font-size: 24px; font-weight: 700; color: #2D2F34">6</span><span style="font-size: 12px">Replies checked</span></div>
+        <div style="background: #FDF9F4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column"><span style="font-size: 24px; font-weight: 700; color: #2D2F34">2</span><span style="font-size: 12px">Wrong ones stopped</span></div>
+        <div style="background: #FDF9F4; border-radius: 16px; padding: 12px; display: flex; flex-direction: column"><span style="font-size: 24px; font-weight: 700; color: #2D2F34">–</span><span style="font-size: 12px">False alarms (need 3 reviews)</span></div>
+      </div>
+      <span style="font-size: 12px; color: #5E646E">Simulated in your browser, not real Slite data.</span>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <button style="height: 48px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer">Start guided tour</button>
+      <button style="height: 48px; border-radius: 999px; border: 1.5px solid #2D2F34; background: transparent; color: #2D2F34; font-size: 15px; font-weight: 500; cursor: pointer">Reset demo</button>
+      <a href="#github" style="text-align: center; font-size: 14px; font-weight: 500; padding: 8px">How it works · GitHub</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":420,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

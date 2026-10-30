@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnswerGuard · Hold</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F434A}a:hover{color:#2D2F34}
+button,textarea{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 900px; width: 100%; box-sizing: border-box; padding: 20px 24px 16px; display: flex; flex-direction: column; gap: 16px; background: #FDF9F4; font-family: Figtree, system-ui, sans-serif; color: #3F434A; font-size: 15px; line-height: 1.45">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div style="width: 32px; height: 32px; border-radius: 10px; background: #F67748; display: flex; align-items: center; justify-content: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+      </div>
+      <span style="font-weight: 700; font-size: 20px; color: #2D2F34; letter-spacing: -0.01em">AnswerGuard</span>
+      <span style="background: #F2F2FA; color: #4552B8; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 500">Concept for Slite Agent</span>
+    </div>
+    <div style="display: flex; gap: 8px">
+      <button style="height: 44px; padding: 0 20px; border-radius: 999px; border: 1.5px solid #2D2F34; background: transparent; color: #2D2F34; font-size: 15px; font-weight: 500; cursor: pointer">Demo menu</button>
+      <button style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 15px; font-weight: 500; cursor: pointer">Guided tour</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch">
+
+    <div style="flex: 0 1 290px; min-width: 260px; display: flex; flex-direction: column; gap: 16px">
+      <section style="background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div style="width: 40px; height: 40px; border-radius: 999px; background: #2D2F34; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600">AK</div>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-size: 13px; color: #5E646E">Customer</span>
+            <span style="font-weight: 600">TCK-9001</span>
+          </div>
+        </div>
+        <span style="font-size: 28px; font-weight: 700; color: #2D2F34; letter-spacing: -0.02em; line-height: 1.1">Ayesha K.</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button style="height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid #E8E3DB; background: #FDF9F4; color: #3F434A; font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer">Instant rail
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <span style="height: 34px; padding: 0 14px; border-radius: 999px; background: #F6F7F9; font-size: 14px; display: flex; align-items: center">PKR 25,000</span>
+        </div>
+      </section>
+
+      <section style="flex: 1; background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+        <span style="font-size: 20px; font-weight: 700; color: #2D2F34">Conversations</span>
+        <button style="text-align: left; border: none; border-radius: 16px; background: #2D2F34; color: #FFFFFF; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer">
+          <span style="display: flex; flex-direction: column"><span style="font-weight: 600">Ayesha K.</span><span style="font-size: 13px; color: #C9CBD1">Instant transfer</span></span>
+          <span style="background: #F9D9D3; color: #8F2A1C; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600">Hold</span>
+        </button>
+        <button style="text-align: left; border: none; border-radius: 16px; background: #F6F7F9; color: #3F434A; padding: 14px 16px; display: flex; flex-direction: column; cursor: pointer">
+          <span style="font-weight: 600">Usman R.</span><span style="font-size: 13px; color: #5E646E">Rail unknown</span>
+        </button>
+        <button style="text-align: left; border: none; border-radius: 16px; background: #F6F7F9; color: #3F434A; padding: 14px 16px; display: flex; flex-direction: column; cursor: pointer">
+          <span style="font-weight: 600">Hina S.</span><span style="font-size: 13px; color: #5E646E">Standard transfer</span>
+        </button>
+      </section>
+    </div>
+
+    <main style="flex: 999 1 460px; min-width: 0; background: #FFFFFF; border-radius: 24px; padding: 26px 28px 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="margin: 0; font-size: 34px; font-weight: 700; color: #2D2F34; letter-spacing: -0.02em; line-height: 1.1">Failed transfer</h1>
+          <span style="font-size: 14px; color: #5E646E">Messenger · today 9:41</span>
+        </div>
+      </div>
+
+      <div style="align-self: flex-start; max-width: 460px; background: #F6F2EC; border-radius: 20px 20px 20px 6px; padding: 14px 18px; font-size: 16px">My transfer to another bank failed yesterday. When do I get my money back?</div>
+
+      <div style="flex: 1; min-height: 160px"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; display: flex; align-items: center; gap: 6px; background: #FCEDEA; color: #8F2A1C; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+          Held by Slite Agent: see the panel
+        </span>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <label for="reply" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Your reply</label>
+          <textarea id="reply" rows="1" style="flex: 1; min-width: 0; border: 1.5px solid #E8E3DB; border-radius: 999px; padding: 16px 22px; font-size: 16px; color: #3F434A; resize: none; outline: none; line-height: 1.4; background: #FFFFFF">Failed transfers are reversed within 4 business days.</textarea>
+          <button disabled aria-label="Send (held)" style="width: 56px; height: 56px; flex: none; border-radius: 999px; border: none; background: #E8E3DB; color: #5E646E; display: flex; align-items: center; justify-content: center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <aside aria-label="Slite Agent" style="flex: 0 1 380px; min-width: 300px; background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div style="width: 28px; height: 28px; border-radius: 9px; background: #F67748; display: flex; align-items: center; justify-content: center">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path></svg>
+          </div>
+          <span style="font-weight: 700; color: #2D2F34">Slite Agent</span>
+        </div>
+        <div style="display: flex; gap: 4px; background: #F6F7F9; border-radius: 999px; padding: 4px">
+          <button style="height: 32px; padding: 0 14px; border: none; border-radius: 999px; background: #FFFFFF; color: #2D2F34; font-size: 14px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: pointer">Check</button>
+          <button style="height: 32px; padding: 0 14px; border: none; border-radius: 999px; background: transparent; color: #5E646E; font-size: 14px; cursor: pointer">Docs</button>
+        </div>
+      </div>
+
+      <div style="border-radius: 20px; background: #FCEDEA; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <span style="align-self: flex-start; display: flex; align-items: center; gap: 6px; background: #FFFFFF; color: #8F2A1C; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+          Hold
+        </span>
+        <span style="font-size: 24px; font-weight: 700; color: #2D2F34; line-height: 1.15; letter-spacing: -0.01em">Don’t send this yet</span>
+        <p style="margin: 0; font-size: 16px">Instant transfers now reverse in <strong>1 business day</strong>. Your reply says 4.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span style="font-size: 14px; color: #5E646E; font-weight: 500">Suggested reply</span>
+        <p style="margin: 0; background: #FDF9F4; border-radius: 16px; padding: 14px 16px; font-size: 16px">For instant transfers, failed payments are reversed within 1 business day.</p>
+        <span style="align-self: flex-start; display: flex; align-items: center; gap: 6px; background: #ECF4ED; color: #2E6B45; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 500">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>
+          Checked against your docs
+        </span>
+      </div>
+
+      <div style="margin-top: auto; display: flex; gap: 8px">
+        <button style="flex: 1; height: 50px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; font-size: 16px; font-weight: 600; cursor: pointer">Use this reply</button>
+        <a href="Why.dc.html" style="height: 50px; padding: 0 22px; border-radius: 999px; border: 1.5px solid #2D2F34; color: #2D2F34; font-size: 16px; font-weight: 500; display: flex; align-items: center; text-decoration: none">Why?</a>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="text-align: center; font-size: 13px; color: #5E646E">Independent concept for Slite Agent · synthetic data · not affiliated with Slite</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

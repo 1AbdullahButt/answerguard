@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnswerGuard · Fixed and sent</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F434A}a:hover{color:#2D2F34}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 900px; height: 620px; box-sizing: border-box; padding: 20px; background: #FDF9F4; font-family: Figtree, system-ui, sans-serif; color: #3F434A; font-size: 15px; line-height: 1.45; display: flex; gap: 16px">
+
+  <main style="flex: 1; min-width: 0; background: #FFFFFF; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #2D2F34; letter-spacing: -0.02em">Failed transfer</h1>
+    <div style="align-self: flex-start; max-width: 360px; background: #F6F2EC; border-radius: 20px 20px 20px 6px; padding: 12px 16px">My transfer to another bank failed yesterday. When do I get my money back?</div>
+    <div style="align-self: flex-end; max-width: 360px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+      <div style="background: #2D2F34; color: #FFFFFF; border-radius: 20px 20px 6px 20px; padding: 12px 16px">For instant transfers, failed payments are reversed within 1 business day.</div>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #2E6B45; font-weight: 500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+        Sent · checked by Slite Agent
+      </span>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 10px; align-items: center">
+      <label for="next" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Your reply</label>
+      <input id="next" placeholder="Type a reply…" style="flex: 1; min-width: 0; height: 52px; box-sizing: border-box; border: 1.5px solid #E8E3DB; border-radius: 999px; padding: 0 22px; font-family: inherit; font-size: 15px">
+      <button aria-label="Send" style="width: 52px; height: 52px; border-radius: 999px; border: none; background: #2D2F34; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>
+      </button>
+    </div>
+  </main>
+
+  <aside aria-label="Slite Agent" style="flex: 0 0 320px; background: #FFFFFF; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(45,47,52,.06)">
+    <div style="border-radius: 20px; background: #ECF4ED; padding: 18px; display: flex; flex-direction: column; gap: 8px">
+      <span style="align-self: flex-start; background: #FFFFFF; color: #2E6B45; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700">Sent</span>
+      <span style="font-size: 21px; font-weight: 700; color: #2D2F34; line-height: 1.2">Ayesha got the right answer</span>
+      <p style="margin: 0">The 4-day reply never reached her.</p>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #FDF9F4; border-radius: 16px; padding: 14px 16px">
+      <span>Wrong replies stopped today</span>
+      <span style="font-size: 22px; font-weight: 700; color: #2D2F34">1</span>
+    </div>
+    <span style="font-size: 12px; color: #5E646E">Simulated count for this demo session</span>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":620}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

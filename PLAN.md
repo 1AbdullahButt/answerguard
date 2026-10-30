@@ -176,3 +176,13 @@ Every gate pastes raw command output (`pnpm test`, `pnpm typecheck`, `pnpm eval`
   If the eval cannot reach 3/3 with Groq after prompt fixes → `.loop/await-human.md`, do not switch models/providers.
 - Phase 2 pause condition is now "no `GROQ_API_KEY`" (present, so no pause).
 - Open questions answered by default: Q1–Q3 defaults adopted; pnpm installed via corepack; repo `answerguard` private.
+
+## 8. Phase 5: Design v2 (added 2026-10-31, approved by Abdullah)
+Brief: `design/v2/REDESIGN_PROMPT.md`; artboards `design/v2/*.dc.html`; contract `design/v2/UI-CONTRACT.md`; D-026.
+- Restyle and simplify the UI to design v2 (Send runs the check, 3 cards, 2 tabs, plain outcome names, Demo menu, v2 tokens,
+  responsive, tour copy). Engine, AI pipeline, API and engine tests unchanged.
+- One-time unlock of the demo test folder; the tester rewrites the spec for the same journey; QA compares it with the old
+  test; re-lock afterwards.
+- **Gate:** typecheck, full test suite, rewritten e2e and the axe audit (1440/1024/390: 0 serious/critical, no horizontal
+  scroll, AA contrast) all pass; screenshots of each v2 state at 1440 and 390 compared side by side with the artboards by QA;
+  QA APPROVED; re-locked; deployed to Vercel production and smoke-tested (desktop + phone); `git worktree list` clean.

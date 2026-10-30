@@ -1,0 +1,359 @@
+// Design v2 copy, generated from the real CheckResult (REDESIGN_PROMPT item 7). Pure functions; no I/O.
+// Engine names and reason codes never appear in this copy; they live only in the Trace view and Raw JSON.
+import type { CheckResult, ClaimResult, Evidence, OverallDecision, Unit, Value } from "@/lib/engine/types";
+import { mostSevereClaim, shortDate, valueWords, WEAKENER_WORDS } from "./format";
+
+export type OutcomeTone = "good" | "check" | "hold" | "ask" | "off";
+
+export interface OutcomeMeta {
+  /** The plain-language name shown in the white pill tag. */
+  name: string;
+  tone: OutcomeTone;
+}
+
+export const OUTCOME: Record<OverallDecision, OutcomeMeta> = {
+  ALLOW: { name: "Good to send", tone: "good" },
+  CAUTION: { name: "Double-check", tone: "check" },
+  HOLD: { name: "Hold", tone: "hold" },
+  ESCALATE: { name: "Ask first", tone: "ask" },
+  AI_UNAVAILABLE: { name: "Couldn't check", tone: "off" },
+};
+
+// ---- small helpers --------------------------------------------------------------------------------
+
+function governingEvidence(claim: ClaimResult | null): Evidence | undefined {
+  const g = claim?.governing;
+  if (!claim || !g) return undefined;
+  return claim.evidence.find((e) => e.source.id === g.sourceId && e.claim.quote === g.quote) ?? claim.evidence.find((e) => e.source.id === g.sourceId);
+}
+
+function scopeSubject(rail: "instant" | "standard" | "any"): string {
+  return rail === "instant" ? "Instant transfers" : rail === "standard" ? "Standard transfers" : "Failed transfers";
+}
+
+function sameUnit(a: Value, b: Value): boolean {
+  return Boolean(a && b && a.unit === b.unit);
+}
+
+/** "4" when the units match the governing value, else the full "4 calendar days". */
+function draftShort(draft: Value, governing: Value, fallback: string): string {
+  if (!draft) return fallback;
+  if (sameUnit(draft, governing)) return draft.amountMax !== undefined && draft.amountMax !== draft.amount ? `${draft.amount}–${draft.amountMax}` : String(draft.amount);
+  return valueWords(draft);
+}
+
+const UNIT_ADJ: Record<Unit, string> = { business_days: "business-day", calendar_days: "day", hours: "hour" };
+
+/** "4 business days" → "4-business-day" (for "The 4-business-day reply never reached Ayesha."). */
+export function valueAdjective(v: Value): string | null {
+  if (!v) return null;
+  const n = v.amountMax !== undefined && v.amountMax !== v.amount ? `${v.amount}–${v.amountMax}` : String(v.amount);
+  return `${n}-${UNIT_ADJ[v.unit]}`;
+}
+
+/** Short doc name for prose: "Outgoing Transfers: Reversal SOP" → "Outgoing Transfers SOP" style trimming is not attempted; titles stay real. */
+function docName(ev: Evidence): string {
+  return ev.source.title;
+}
+
+// ---- headline + one sentence ----------------------------------------------------------------------
+
+export interface Summary {
+  name: string;
+  tone: OutcomeTone;
+  headline: string;
+  /** One sentence; `strong` is the value to emphasise inside it (may be null). */
+  sentence: string;
+  strong: string | null;
+}
+
+const CAUTION_HEADLINE: Partial<Record<CheckResult["reasonCode"], string>> = {
+  CHANGE_SIGNALLED: "Right today, changing soon",
+  WEAK_BASIS: "The doc behind this changed",
+  EXTRACTION_GAP: "Couldn't confirm the timing",
+  OUTSIDE_COVERAGE: "Outside what we can check",
+  SOURCE_UNREAD: "A doc couldn't be read",
+  PROPOSAL_ONLY: "Only a proposal says this",
+  UNSUPPORTED: "No doc backs this up",
+  UNIT_MISMATCH: "Check the units",
+  HEDGED_CONTRADICTION: "Your hedge differs from the policy",
+};
+
+export function summarize(result: CheckResult, ticketRail: "instant" | "standard" | "unknown"): Summary {
+  const meta = OUTCOME[result.decision];
+  const claim = mostSevereClaim(result);
+  const gov = claim?.governing ?? null;
+  const govEv = governingEvidence(claim);
+  // Name the ticket's own transfer type when it is known (the governing rule applies to it); else the rule's scope.
+  const subject = scopeSubject(ticketRail !== "unknown" ? ticketRail : (govEv?.claim.scope.rail ?? "any"));
+  const base = { name: meta.name, tone: meta.tone };
+
+  switch (result.decision) {
+    case "AI_UNAVAILABLE":
+      return {
+        ...base,
+        headline: "Not sent, nothing was lost",
+        sentence: "The AI didn't answer, so this reply can't be checked yet. Try again, or remove the timeline from your reply.",
+        strong: null,
+      };
+    case "HOLD": {
+      if (gov && claim) {
+        const says = draftShort(claim.draftClaim.value, gov.value, claim.draftClaim.valueText);
+        return { ...base, headline: "Don't send this yet", sentence: `${subject} now reverse in ${valueWords(gov.value)}. Your reply says ${says}.`, strong: valueWords(gov.value) };
+      }
+      return { ...base, headline: "Don't send this yet", sentence: firstUpper(result.headline.replace(/^Hold:\s*/i, "")), strong: null };
+    }
+    case "ESCALATE": {
+      if (result.reasonCode === "CONFLICT_UNRESOLVED") {
+        const c = conflictPair(claim);
+        return {
+          ...base,
+          headline: "Your docs disagree",
+          sentence: c ? `${c.a} says ${c.av} and ${c.b} says ${c.bv}, and no rule picks a winner.` : "Your docs disagree, and no rule picks a winner.",
+          strong: null,
+        };
+      }
+      return { ...base, headline: "Depends on the transfer", sentence: "Instant and standard transfers differ, and this ticket doesn't say which.", strong: null };
+    }
+    case "ALLOW": {
+      if (result.reasonCode === "NO_POLICY_CLAIM" || !claim) {
+        return { ...base, headline: "Your reply is right", sentence: "There's no policy promise in this reply, so there's nothing to contradict.", strong: null };
+      }
+      if (gov) return { ...base, headline: "Your reply is right", sentence: `${subject} reverse in ${valueWords(gov.value)}. Your reply matches.`, strong: valueWords(gov.value) };
+      return { ...base, headline: "Your reply is right", sentence: "Your reply matches your docs.", strong: null };
+    }
+    case "CAUTION": {
+      const headline = CAUTION_HEADLINE[result.reasonCode] ?? CAUTION_HEADLINE[claim?.reasonCode ?? "SUPPORTED"] ?? "Double-check before sending";
+      return { ...base, headline, sentence: cautionSentence(result, claim), strong: null };
+    }
+  }
+}
+
+function firstUpper(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function conflictPair(claim: ClaimResult | null): { a: string; av: string; b: string; bv: string } | null {
+  if (!claim) return null;
+  const cands = claim.evidence.filter((e) => e.standing === "CANDIDATE" && e.applicability !== "NOT_APPLICABLE" && e.claim.value);
+  const a = cands[0];
+  const b = cands.find((e) => a && e.source.id !== a.source.id && (e.claim.value?.amount !== a.claim.value?.amount || e.claim.value?.unit !== a.claim.value?.unit));
+  if (!a || !b) return null;
+  return { a: docName(a), av: valueWords(a.claim.value), b: docName(b), bv: valueWords(b.claim.value) };
+}
+
+function cautionSentence(result: CheckResult, claim: ClaimResult | null): string {
+  const gov = claim?.governing ?? null;
+  const code = result.reasonCode === "SOURCE_UNREAD" || result.reasonCode === "EXTRACTION_GAP" ? result.reasonCode : (claim?.reasonCode ?? result.reasonCode);
+  switch (code) {
+    case "CHANGE_SIGNALLED": {
+      const sig = claim?.evidence.find((e) => (e.standing === "PROPOSAL" || e.standing === "NOT_YET_EFFECTIVE") && e.relation === "contradicts");
+      if (sig) {
+        const when = sig.standing === "PROPOSAL" ? "pending sign-off" : `due to start${sig.claim.effectiveFrom ? ` ${shortDate(sig.claim.effectiveFrom)}` : ""}`;
+        return `Your reply matches the policy, but a change to ${valueWords(sig.claim.value)} is ${when}.`;
+      }
+      return "Your reply matches the policy, but a change is signalled.";
+    }
+    case "WEAK_BASIS": {
+      const ev = governingEvidence(claim);
+      const w = ev?.weakeners.map((x) => WEAKENER_WORDS[x].toLowerCase()).join(" and ") ?? "weakened";
+      return gov && ev
+        ? `The rules point to ${valueWords(gov.value)}, but ${docName(ev)} is ${w}, so it's trusted less.`
+        : "The doc behind this answer is trusted less right now.";
+    }
+    case "EXTRACTION_GAP": {
+      const hits = result.patternMatches.map((m) => `“${m.text}”`).join(", ");
+      return `AnswerGuard found a timing${hits ? ` (${hits})` : ""} but couldn't confirm it. Check it manually.`;
+    }
+    case "SOURCE_UNREAD": {
+      const ids = result.caps.map((c) => c.sourceId).join(", ");
+      return `${ids || "A doc"} couldn't be read, so this can't be confirmed as right. It might hold a contradiction.`;
+    }
+    case "PROPOSAL_ONLY":
+      return `Only a proposal mentions ${claim?.draftClaim.valueText ?? "this"}. Don't promise it until a policy confirms it.`;
+    case "UNSUPPORTED":
+      return `No doc supports ${claim?.draftClaim.valueText ?? "this"}. Check it with the policy owner.`;
+    case "UNIT_MISMATCH":
+      return `Your reply says ${claim?.draftClaim.valueText ?? "one unit"}, but the policy says ${gov ? valueWords(gov.value) : "a different unit"}.`;
+    case "HEDGED_CONTRADICTION":
+      return `Your hedged “${claim?.draftClaim.valueText ?? ""}” differs from the policy (${gov ? valueWords(gov.value) : "another value"}).`;
+    case "OUTSIDE_COVERAGE":
+      return `Your reply promises ${claim?.draftClaim.valueText ?? "something"} that AnswerGuard doesn't cover. Check it against the source.`;
+    default:
+      return firstUpper(result.headline.replace(/^Caution:\s*/i, ""));
+  }
+}
+
+// ---- Why? --------------------------------------------------------------------------------------------
+
+export interface WhyDoc {
+  id: string;
+  title: string;
+  quote: string;
+  highlight: string;
+  tags: Array<{ text: string; tone: "good" | "ask" | "amber" | "neutral" }>;
+}
+
+export interface WhyOther {
+  id: string;
+  title: string;
+  line: string;
+  label: string;
+}
+
+export interface WhyModel {
+  title: string;
+  replySays: string;
+  governing: WhyDoc | null;
+  others: WhyOther[];
+  didntCount: Array<{ id: string; text: string }>;
+  so: string;
+}
+
+const WHY_TITLE: Record<OverallDecision, string> = {
+  HOLD: "Why it's on hold",
+  ALLOW: "Why it's good to send",
+  CAUTION: "Why to double-check",
+  ESCALATE: "Why to ask first",
+  AI_UNAVAILABLE: "Why it couldn't be checked",
+};
+
+function railShort(rail: "instant" | "standard" | "any"): string {
+  return rail === "any" ? "all transfers" : `${rail} transfers`;
+}
+
+export function whyModel(result: CheckResult): WhyModel {
+  const claim = mostSevereClaim(result);
+  const gov = claim?.governing ?? null;
+  const govEv = governingEvidence(claim);
+  const replySays = claim ? (claim.draftClaim.value ? valueWords(claim.draftClaim.value) : claim.draftClaim.valueText || "No timeline") : "No policy promise";
+
+  let governing: WhyDoc | null = null;
+  const others: WhyOther[] = [];
+  const didntCount: Array<{ id: string; text: string }> = [];
+  const seen = new Set<string>();
+
+  if (gov && govEv) {
+    seen.add(govEv.source.id);
+    const tags: WhyDoc["tags"] = [];
+    const sig = govEv.source.signals;
+    if (sig.verification === "verified" && sig.verifiedAt) tags.push({ text: `Verified ${shortDate(sig.verifiedAt)}`, tone: "good" });
+    for (const w of govEv.weakeners) tags.push({ text: WEAKENER_WORDS[w], tone: "amber" });
+    if (gov.via === "EXPLICIT_SUPERSESSION") {
+      const target = claim?.evidence.find(
+        (e) => e.standing === "CANDIDATE" && e.source.id !== govEv.source.id && e.claim.value && (e.claim.value.amount !== gov.value.amount || e.claim.value.unit !== gov.value.unit),
+      );
+      tags.push({ text: `Replaces ${target ? target.source.title : "the older doc"} for ${govEv.claim.scope.rail === "any" ? "all" : govEv.claim.scope.rail}`, tone: "ask" });
+    } else if (gov.via === "SPECIFIC_EXCEPTION") {
+      tags.push({ text: `Specific to ${railShort(govEv.claim.scope.rail)}`, tone: "ask" });
+    }
+    governing = { id: govEv.source.id, title: govEv.source.title, quote: gov.quote, highlight: gov.valueText, tags };
+  }
+
+  for (const ev of claim?.evidence ?? []) {
+    if (seen.has(ev.source.id)) continue;
+    seen.add(ev.source.id);
+    if (ev.standing === "CANDIDATE" && ev.applicability !== "NOT_APPLICABLE") {
+      const v = ev.claim.value;
+      const differs = gov && v ? !(v.amount === gov.value.amount && v.unit === gov.value.unit && v.amountMax === gov.value.amountMax) : false;
+      const label = gov
+        ? differs
+          ? gov.via === "EXPLICIT_SUPERSESSION"
+            ? "Replaced"
+            : "Overridden"
+          : "Agrees"
+        : ev.applicability === "SCOPE_UNRESOLVED"
+          ? "Only for one rail"
+          : "Disagrees";
+      others.push({ id: ev.source.id, title: ev.source.title, line: `${v ? valueWords(v) : ev.claim.valueText}, ${railShort(ev.claim.scope.rail)}`, label });
+    } else {
+      const reason =
+        ev.standing === "EXCLUDED"
+          ? ev.source.signals.flaggedOutdated
+            ? "flagged outdated"
+            : "deprecated"
+          : ev.standing === "PROPOSAL"
+            ? "a proposal, not policy"
+            : ev.standing === "NOT_YET_EFFECTIVE"
+              ? `not in force yet${ev.claim.effectiveFrom ? ` (from ${shortDate(ev.claim.effectiveFrom)})` : ""}`
+              : "doesn't apply to this transfer";
+      didntCount.push({ id: ev.source.id, text: `${ev.source.title}: ${reason}.` });
+    }
+  }
+
+  return { title: WHY_TITLE[result.decision], replySays, governing, others, didntCount, so: soSentence(result, claim, govEv) };
+}
+
+function soSentence(result: CheckResult, claim: ClaimResult | null, govEv: Evidence | undefined): string {
+  const gov = claim?.governing ?? null;
+  let first = "";
+  if (gov && govEv) {
+    if (gov.via === "EXPLICIT_SUPERSESSION") first = `${govEv.source.title} says it replaces the older doc for ${railShort(govEv.claim.scope.rail)}.`;
+    else if (gov.via === "SPECIFIC_EXCEPTION") first = `${govEv.source.title} is the specific rule for ${railShort(govEv.claim.scope.rail)}.`;
+    else first = "Your docs agree on this.";
+  }
+  const code = claim?.reasonCode ?? result.reasonCode;
+  let second: string;
+  switch (result.decision) {
+    case "HOLD":
+      second = "Your reply contradicts it, so it's held.";
+      break;
+    case "ALLOW":
+      second = claim ? "Your reply matches it, so it's good to send." : "Your reply makes no policy promise, so it's good to send.";
+      break;
+    case "ESCALATE":
+      second =
+        code === "SCOPE_UNKNOWN"
+          ? "The rules differ by rail and this ticket's rail is unknown, so ask first."
+          : "They disagree and no rule picks a winner, so ask first. Newer or verified doesn't decide it.";
+      break;
+    case "CAUTION":
+      second =
+        code === "WEAK_BASIS"
+          ? "But it changed after it was verified, so double-check before sending."
+          : code === "CHANGE_SIGNALLED"
+            ? "A change is signalled, so double-check before sending."
+            : "The rules can't confirm it, so double-check before sending.";
+      break;
+    default:
+      second = "The AI didn't answer, so nothing was decided.";
+  }
+  return first ? `${first} ${second}` : second;
+}
+
+// ---- Trace ---------------------------------------------------------------------------------------------
+
+export interface TraceRow {
+  rule: string;
+  outcome: "pass" | "fail" | "fired" | "skipped";
+  detail: string;
+}
+
+/** Draft-level rules, then source standings (S), then each claim's D-rules, then the roll-up. All from the result. */
+export function traceRows(result: CheckResult): TraceRow[] {
+  const rows: TraceRow[] = [];
+  const top = result.trace.filter((t) => t.rule !== "Overall");
+  const overall = result.trace.filter((t) => t.rule === "Overall");
+  rows.push(...top);
+  const standings = new Map<string, string>();
+  for (const c of result.claims) for (const e of c.evidence) if (!standings.has(e.source.id)) standings.set(e.source.id, `${e.source.id}: ${e.standingRule}`);
+  if (standings.size) rows.push({ rule: "S", outcome: "pass", detail: Array.from(standings.values()).join(" ") });
+  result.claims.forEach((c) => rows.push(...c.trace));
+  rows.push(...overall);
+  return rows;
+}
+
+export function extractedCount(result: CheckResult): number {
+  const ids = new Set<string>();
+  for (const c of result.claims) {
+    ids.add(c.draftClaim.claimId);
+    for (const e of c.evidence) ids.add(e.claim.claimId);
+  }
+  return ids.size;
+}
+
+export function modelLine(ai: CheckResult["ai"]): string {
+  const model = ai.model.replace(/^[^/]+\//, "");
+  const latency = ai.mode === "saved" ? "saved response" : `${(ai.latencyMs / 1000).toFixed(1)} s`;
+  return [ai.provider, model, latency].filter(Boolean).join(" · ");
+}

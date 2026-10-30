@@ -1,0 +1,99 @@
+"use client";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronLeft } from "lucide-react";
+import type { CheckResult } from "@/lib/engine/types";
+import { mostSevereClaim } from "@/lib/client/format";
+import { extractedCount, modelLine, OUTCOME, traceRows } from "@/lib/client/outcome";
+import { cx, Tag, ui } from "@/components/ui/atoms";
+import s from "./agent.module.css";
+
+const TAG_CLS = { good: s.pGood, check: s.pCheck, hold: s.pHold, ask: s.pAsk, off: s.pOff };
+
+const TOKEN = /("(?:\\.|[^"\\])*")(\s*:)?|\b(-?\d+(?:\.\d+)?)\b|\b(true|false|null)\b/g;
+
+function tint(json: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let i = 0;
+  for (const m of json.matchAll(TOKEN)) {
+    const at = m.index ?? 0;
+    if (at > last) out.push(json.slice(last, at));
+    if (m[1] !== undefined) {
+      out.push(
+        <span key={i++} className={m[2] ? s.jk : s.js}>
+          {m[1]}
+        </span>,
+      );
+      if (m[2]) out.push(m[2]);
+    } else {
+      out.push(
+        <span key={i++} className={s.jn}>
+          {m[0]}
+        </span>,
+      );
+    }
+    last = at + m[0].length;
+  }
+  out.push(json.slice(last));
+  return out;
+}
+
+/**
+ * The full rule trace (design v2, for engineers): every entry from the real CheckResult, in engine order, with the
+ * fired rules highlighted. Engine names and reason codes are allowed here and in Raw JSON only.
+ */
+export function TraceView({ result, onBack, onOpenDoc }: { result: CheckResult; onBack: () => void; onOpenDoc: (id: string) => void }) {
+  const [raw, setRaw] = useState(false);
+  const backRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => backRef.current?.focus(), []);
+  const rows = traceRows(result);
+  const tone = OUTCOME[result.decision].tone;
+  const gov = mostSevereClaim(result)?.governing?.sourceId;
+  const firstDoc = gov ?? result.claims[0]?.evidence[0]?.source.id;
+
+  return (
+    <div className={s.stack} style={{ flex: 1, gap: 14 }}>
+      <div className={s.viewHead}>
+        <button ref={backRef} type="button" className={ui.round} aria-label="Back to Why" onClick={onBack}>
+          <ChevronLeft aria-hidden="true" strokeWidth={2.2} />
+        </button>
+        <h3 className={s.viewTitle}>Rule trace</h3>
+        <span className={cx(s.traceTag, TAG_CLS[tone])}>{result.decision}</span>
+      </div>
+
+      <div className={s.tags}>
+        <Tag tone="ask">AI extracted: {extractedCount(result)} claims</Tag>
+        <Tag tone="ink">Rules decided</Tag>
+        <Tag tone="neutral">{modelLine(result.ai)}</Tag>
+        <Tag tone="neutral">{result.reasonCode}</Tag>
+      </div>
+
+      <ol className={s.traceList} aria-label="Rules in the order they ran">
+        {rows.map((r, i) => (
+          <li key={`${r.rule}-${i}`} className={cx(r.outcome === "fired" && s.fired, r.outcome === "skipped" && s.skipped, r.outcome === "fail" && s.failed)}>
+            <span className={s.rid}>{r.rule}</span>
+            <span className={s.rdetail}>
+              {r.outcome === "fired" ? <strong>Fired. </strong> : r.outcome === "skipped" ? <span className="sr-only">Skipped. </span> : r.outcome === "fail" ? <strong>Failed. </strong> : null}
+              {r.detail}
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      {raw ? (
+        <pre className={s.json} tabIndex={0} aria-label="Raw CheckResult JSON">
+          {tint(JSON.stringify(result, null, 2))}
+        </pre>
+      ) : null}
+
+      <div className={s.twoBtns}>
+        <button type="button" className={cx(ui.btn, ui.outline, ui.sm)} aria-pressed={raw} onClick={() => setRaw((v) => !v)}>
+          Raw JSON
+        </button>
+        <button type="button" className={cx(ui.btn, ui.outline, ui.sm)} onClick={() => firstDoc && onOpenDoc(firstDoc)} disabled={!firstDoc}>
+          Open the docs
+        </button>
+      </div>
+    </div>
+  );
+}

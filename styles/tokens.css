@@ -1,69 +1,45 @@
-/* Design tokens (design/DESIGN.md §2). The mockups' :root is the reference implementation. */
+/* Design tokens, design v2 (design/v2/REDESIGN_PROMPT.md). Contrast ratios: design/v2/DESIGN-NOTES.md. */
 :root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-2: #fbfbfa;
-  --surface-3: #f2f2f0;
-  --border: #e8e8e6;
-  --border-strong: #d6d6d2;
-  --text: #1f1f1f;
-  --muted: #6b6b6b;
-  --faint: #8a8a86;
-  --accent: #0b6e8a;
-  --accent-hover: #095b72;
-  --accent-soft: #e7f2f5;
-  --accent-ring: rgba(11, 110, 138, 0.35);
+  --bg: #fdf9f4;
+  --card: #ffffff;
+  --soft: #f6f7f9;
+  --bubble: #f6f2ec;
+  --line: #e8e3db;
+  /* Input boundaries need 3:1 (WCAG 1.4.11): #8B9099 on white is 3.21:1. Decorative lines keep --line. */
+  --field-line: #8b9099;
+  --line-soft: #f0ece6;
 
-  --allow: #17743a;
-  --allow-bg: #eaf6ed;
-  --allow-bd: #bfe2c9;
-  --caution: #8a5300;
-  --caution-icon: #9a6200;
-  --caution-bg: #fff5db;
-  --caution-bd: #f1d798;
-  --hold: #b42318;
-  --hold-bg: #fdedeb;
-  --hold-bd: #f4c4be;
-  --esc: #4338ca;
-  --esc-bg: #eeeffc;
-  --esc-bd: #c9ccf5;
-  --off: #1f1f1f;
-  --off-bg: #f2f2f0;
-  --off-bd: #d6d6d2;
+  --text: #3f434a;
+  --ink: #2d2f34;
+  --muted: #5e646e;
+  --on-ink-muted: #c9cbd1;
 
-  --quote: #fff1b8;
-  --quote-bd: #f0dc85;
-  --ink: #1f1f1f;
+  /* The AnswerGuard mark only. Never text, never a status. */
+  --mark: #f67748;
 
-  --r-sm: 4px;
-  --r: 6px;
-  --r-lg: 8px;
-  --r-xl: 12px;
+  /* Outcomes: background / text. Always shown as a word in a white pill; colour never carries the meaning alone. */
+  --good-bg: #ecf4ed;
+  --good: #2e6b45;
+  --check-bg: #fef3dc;
+  --check: #6b4a00;
+  --hold-bg: #fcedea;
+  --hold: #8f2a1c;
+  --ask-bg: #f2f2fa;
+  --ask: #4552b8;
+  --hold-tag-on-ink: #f9d9d3;
 
-  --s1: 4px;
-  --s2: 8px;
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 20px;
-  --s6: 24px;
-  --s8: 32px;
+  /* Tags */
+  --tag-amber: #fedc9b;
+  --trace-fired: #fef6e7;
 
-  --shadow-1: 0 1px 2px rgba(15, 15, 15, 0.04);
-  --shadow-2: 0 1px 2px rgba(15, 15, 15, 0.04), 0 4px 12px rgba(15, 15, 15, 0.06);
-  --shadow-3: 0 8px 28px rgba(15, 15, 15, 0.14), 0 2px 6px rgba(15, 15, 15, 0.06);
+  --radius-card: 24px;
+  --radius-inner: 20px;
+  --shadow-card: 0 1px 2px rgba(45, 47, 52, 0.06);
+  --shadow-pop: 0 12px 32px rgba(45, 47, 52, 0.12);
 
-  --font: var(--font-inter, "Inter"), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
-  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  --font: var(--font-figtree, "Figtree"), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: var(--font-jbmono, "JetBrains Mono"), ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --topbar-h: 48px;
-  --footer-h: 30px;
-}
-
-/* Phones: the disclaimer footer wraps to two lines. */
-@media (max-width: 699px) {
-  :root {
-    --footer-h: 40px;
-  }
+  --focus: 0 0 0 3px #ffffff, 0 0 0 5px #2d2f34;
 }

@@ -1,11 +1,11 @@
 "use client";
-// Guided demo tour (SPEC §15 P1, §16 demo script). A non-modal coach mark: role="dialog" without aria-modal,
-// anchored to the element it talks about, with a highlight ring. Each step can drive the app through the same
-// actions a user would trigger (select ticket, fill the canonical draft, Check, switch tabs, apply variant B7).
+// Guided demo tour (SPEC §15 P1, §16 demo script), design v2: Send is the check. A non-modal coach mark
+// (role="dialog" without aria-modal) anchored to the element it talks about, with a highlight ring. Steps may select a
+// ticket, fill the canonical draft, switch views and re-check, but nothing is sent or edited without a button press.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, CircleCheck, Compass, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleCheck, X } from "lucide-react";
 import type { AnswerGuard } from "@/lib/client/useAnswerGuard";
-import { cx, ui } from "@/components/ui/atoms";
+import { cx } from "@/components/ui/atoms";
 import s from "./tour.module.css";
 
 export const CANONICAL_DRAFT = "Failed transfers are reversed within 4 business days.";
@@ -18,8 +18,8 @@ export interface TourState {
 
 interface Ctx {
   ag: AnswerGuard;
-  showPanel: () => void;
-  hidePanel: () => void;
+  showAgent: () => void;
+  hideAgent: () => void;
 }
 
 interface Step {
@@ -29,90 +29,86 @@ interface Step {
   enter?: (c: Ctx) => void;
 }
 
-function catchSetup({ ag, showPanel }: Ctx) {
-  ag.actions.prepareTicket("TCK-9001", CANONICAL_DRAFT);
-  ag.actions.setTab("check");
-  showPanel();
-  void ag.actions.runCheck();
-}
+const held = (ag: AnswerGuard, id: string) => ag.ticket?.id === id && ag.sendState.kind === "blocked";
 
 const STEPS: Step[] = [
   {
-    title: "Catch a wrong promise",
+    title: "Send runs the check",
     body: (
       <>
-        Ayesha&apos;s transfer went over the <b>instant rail</b>, and the draft promises <b>4 business days</b>. Before it&apos;s
-        sent, AnswerGuard checks it against the team&apos;s docs: <b>Hold</b>. The instant-rail exception (DOC-103) says 1 business day.
+        Ayesha&apos;s transfer went over the <b>instant rail</b>, and the reply promises <b>4 business days</b>. Press <b>Send</b>: Slite
+        Agent checks the reply against your docs first, and holds it if it&apos;s wrong.
       </>
     ),
-    target: () => ['[data-tour="decision"]', '[data-tour="composer"]'],
-    enter: catchSetup,
-  },
-  {
-    title: "Why the verified SOP lost",
-    body: (
-      <>
-        The AI only pulled out claims and verbatim quotes. The <b>rules</b> decided: DOC-103 explicitly supersedes section 3 of the SOP
-        for instant-rail transfers (<b>rule D5</b>), so its 1 business day governs. The SOP is verified too, but verification and recency
-        never break a tie.
-      </>
-    ),
-    target: () => ['[data-tour="evidence"]', '[data-tour="trace"]'],
-    enter: (c) => {
-      const r = c.ag.results["TCK-9001"];
-      if (!r || c.ag.ticket?.id !== "TCK-9001" || r.result.decision !== "HOLD") catchSetup(c);
-      c.ag.actions.setTab("reasoning");
-      c.showPanel();
-    },
-  },
-  {
-    title: "Recover: blocked, then the safe reply",
-    body: (
-      <>
-        Sending always <b>rechecks on the server</b>. The wrong draft comes back Hold, so it&apos;s blocked and counted as an intercept.
-        The safe reply was already rechecked as Allow, so it goes through.
-      </>
-    ),
-    target: () => ['[data-tour="composer"]'],
-    enter: ({ ag, hidePanel }) => {
-      if (ag.ticket?.id !== "TCK-9001") ag.actions.prepareTicket("TCK-9001");
+    target: (ag) => (held(ag, "TCK-9001") ? ['[data-tour="decision"]'] : ['[data-tour="send"]', '[data-tour="composer"]']),
+    enter: ({ ag, hideAgent }) => {
+      ag.actions.prepareTicket("TCK-9001", CANONICAL_DRAFT);
       ag.actions.setTab("check");
-      hidePanel();
+      hideAgent();
     },
   },
   {
-    title: "Ambiguity: escalate, no timeline",
+    title: "Why it's on hold",
     body: (
       <>
-        Usman&apos;s rail is <b>unknown</b>, and the rules differ by rail (rule D1). AnswerGuard <b>escalates</b> instead of guessing, and
-        the holding reply contains no timeline at all.
+        The AI only read the docs and quoted them. <b>Fixed rules</b> made the call: the instant-rail exception says it replaces the SOP for
+        instant transfers, so its 1 business day applies. The SOP is verified too, but verified or newer never breaks a tie.
       </>
     ),
-    target: () => ['[data-tour="safe-reply"]', '[data-tour="decision"]'],
-    enter: ({ ag, showPanel }) => {
+    target: () => ['[data-tour="why-docs"]', '[data-tour="decision"]'],
+    enter: ({ ag, showAgent }) => {
+      ag.actions.setTab("check");
+      if (ag.ticket?.id === "TCK-9001" && ag.results["TCK-9001"]) ag.actions.setView("why");
+      showAgent();
+    },
+  },
+  {
+    title: "Use the suggested reply",
+    body: (
+      <>
+        The suggested reply was already checked against your docs. Use it and press Send: this time the check passes and the reply goes out.
+        The held one never reached Ayesha.
+      </>
+    ),
+    target: (ag) => (ag.sendState.kind === "sent" ? ['[data-tour="payoff"]'] : ['[data-tour="suggested"]', '[data-tour="decision"]']),
+    enter: ({ ag, showAgent }) => {
+      ag.actions.setTab("check");
+      ag.actions.setView("main");
+      showAgent();
+    },
+  },
+  {
+    title: "Ask first: no guessing",
+    body: (
+      <>
+        Usman&apos;s rail is <b>unknown</b>, and instant and standard transfers have different timelines. Slite Agent asks you to confirm
+        instead of guessing, and its holding reply contains no timeline at all.
+      </>
+    ),
+    target: (ag) => (held(ag, "TCK-9002") ? ['[data-tour="suggested"]', '[data-tour="decision"]'] : ['[data-tour="send"]', '[data-tour="composer"]']),
+    enter: ({ ag, hideAgent }) => {
       ag.actions.prepareTicket("TCK-9002", CANONICAL_DRAFT);
       ag.actions.setTab("check");
-      showPanel();
-      void ag.actions.runCheck();
+      hideAgent();
     },
   },
   {
-    title: "Live proof: edit a source",
+    title: "Live proof: edit a doc",
     body: (
       <>
-        Change DOC-103 from 1 to <b>2 business days</b> with <b>Save draft</b>. Its Oct 26 verification no longer covers the new text
-        (<b>edited after verification</b>), so the result drops to <b>Caution</b> instead of a confident Hold. With <b>Save and verify
-        (simulated)</b> it would be Hold at 2 days. Reset workspace restores the seed.
+        Change the instant-rail exception to <b>2 business days</b> and press <b>Save and re-check</b>. Its Oct 26 verification no longer
+        covers the new text, so the answer becomes <b>Double-check</b> instead of a confident Hold. With <b>Save and verify (simulated)</b>{" "}
+        it would be Hold at 2 days. Reset demo restores every doc.
       </>
     ),
-    target: (_ag, applied) => (applied ? ['[data-tour="decision"]'] : ['[data-tour="source-DOC-103"]']),
-    enter: ({ ag, showPanel }) => {
-      // Start from the canonical Hold so the change chip reads "Hold → Caution" after the edit. If DOC-103 is already
-      // edited in this workspace, leave it alone: the step offers an explicit restore instead of changing it silently.
+    target: (_ag, applied) => (applied ? ['[data-tour="decision"]'] : ['[data-tour="doc-DOC-103"]', '[data-tour="agent"]']),
+    enter: ({ ag, showAgent }) => {
+      // Start from the canonical Hold (a re-check, not a send). If DOC-103 is already edited here, leave it alone: the step
+      // offers an explicit restore instead of changing it silently (D-024).
       ag.actions.prepareTicket("TCK-9001", CANONICAL_DRAFT);
       if (!ag.overrides["DOC-103"]) void ag.actions.runCheck();
-      ag.actions.setTab("sources");
-      showPanel();
+      ag.actions.openDoc("DOC-103");
+      showAgent();
     },
   },
 ];
@@ -135,20 +131,20 @@ interface Box {
   height: number;
 }
 
-const CARD_W = 328;
+const CARD_W = 340;
 
-/** Prefer the left of the target (the panel is on the right), then below, then above. */
+/** Prefer the left of the target (the agent card is on the right), then right, below, above. */
 function placeCard(t: Box | null, cardH: number): { top: number; left: number } {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const minTop = 56;
-  const maxTop = Math.max(minTop, vh - cardH - 44);
-  if (!t) return { top: minTop + 8, left: Math.max(8, vw - CARD_W - 16) };
+  const minTop = 72;
+  const maxTop = Math.max(minTop, vh - cardH - 52);
+  if (!t) return { top: minTop + 8, left: Math.max(8, vw - CARD_W - 24) };
   const clampTop = (y: number) => Math.min(Math.max(y, minTop), maxTop);
   if (t.left - CARD_W - 20 >= 8) return { top: clampTop(t.top), left: t.left - CARD_W - 20 };
   if (t.left + t.width + 20 + CARD_W <= vw - 8) return { top: clampTop(t.top), left: t.left + t.width + 20 };
   const left = Math.min(Math.max(8, t.left), vw - CARD_W - 8);
-  if (t.top + t.height + 12 + cardH <= vh - 40) return { top: t.top + t.height + 12, left };
+  if (t.top + t.height + 12 + cardH <= vh - 48) return { top: t.top + t.height + 12, left };
   return { top: clampTop(t.top - cardH - 12), left };
 }
 
@@ -170,7 +166,7 @@ export function GuidedTour({
   const cardRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [box, setBox] = useState<Box | null>(null);
-  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 64, left: 16 });
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 80, left: 16 });
   const [applied, setApplied] = useState(false);
   const [phoneTop, setPhoneTop] = useState(false);
   const scrolledFor = useRef<string>("");
@@ -180,10 +176,10 @@ export function GuidedTour({
   const ctx = useCallback(
     (): Ctx => ({
       ag: agRef.current,
-      showPanel: () => {
+      showAgent: () => {
         if (overlay) agRef.current.actions.setPanelOpen(true);
       },
-      hidePanel: () => {
+      hideAgent: () => {
         if (overlay) agRef.current.actions.setPanelOpen(false);
       },
     }),
@@ -194,7 +190,6 @@ export function GuidedTour({
   const step = STEPS[state.step];
   const ready = Boolean(ag.seed);
 
-  // Drive the app when a step is entered (once per step change).
   useEffect(() => {
     if (!isTour || !ready || !step) return;
     if (state.step === 4) setApplied(false);
@@ -202,13 +197,12 @@ export function GuidedTour({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTour, state.step, ready]);
 
-  // Focus the step title on open and on every step change (focus management for a non-modal dialog).
   useEffect(() => {
-    const t = window.setTimeout(() => titleRef.current?.focus({ preventScroll: true }), 30);
+    const t = window.setTimeout(() => titleRef.current?.focus({ preventScroll: true }), 80);
     return () => window.clearTimeout(t);
   }, [state.mode, state.step]);
 
-  // Esc closes the tour when focus is in the tour card or on the page body, not while another dialog/tooltip has focus.
+  // Esc closes the tour unless another dialog/tooltip handled it or has focus (D-024).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented) return;
@@ -220,27 +214,25 @@ export function GuidedTour({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Track the anchored element (it moves as the app renders results, opens panels or scrolls).
   useLayoutEffect(() => {
-    const selectors = isTour && step ? step.target(agRef.current, applied) : ['[data-tour="tour-button"]'];
-    const key = selectors.join(",");
+    const selectors = isTour && step ? step.target(agRef.current, applied) : ['[data-tour="tour-button"]', '[data-tour="demo-menu"]'];
     const update = () => {
-      const el = findTarget(selectors) ?? (isTour ? document.querySelector<HTMLElement>(selectors[0] ?? "") : null);
-      // Bring the anchor into view once per step (never fight the user's own scrolling afterwards).
+      const sel = isTour && step ? step.target(agRef.current, applied) : selectors;
+      const key = sel.join(",");
+      const el = findTarget(sel) ?? (isTour ? document.querySelector<HTMLElement>(sel[0] ?? "") : null);
       if (el && isTour && scrolledFor.current !== key) {
         scrolledFor.current = key;
         el.scrollIntoView({ block: "nearest" });
       }
       const r = el?.getBoundingClientRect();
-      const next = r ? { top: r.top - 4, left: r.left - 4, width: r.width + 8, height: r.height + 8 } : null;
+      const next = r && r.width > 0 ? { top: r.top - 4, left: r.left - 4, width: r.width + 8, height: r.height + 8 } : null;
       setBox((b) =>
         b && next && Math.abs(b.top - next.top) < 1 && Math.abs(b.left - next.left) < 1 && Math.abs(b.width - next.width) < 1 && Math.abs(b.height - next.height) < 1
           ? b
           : next,
       );
-      // Phones: a bottom card, flipped to the top when the anchor sits in the lower half (the composer).
       setPhoneTop(Boolean(r && r.top + r.height / 2 > window.innerHeight / 2 && window.innerWidth < 700));
-      const h = cardRef.current?.offsetHeight ?? 220;
+      const h = cardRef.current?.offsetHeight ?? 240;
       const p = placeCard(next, h);
       setPos((o) => (Math.abs(o.top - p.top) < 1 && Math.abs(o.left - p.left) < 1 ? o : p));
     };
@@ -273,16 +265,15 @@ export function GuidedTour({
             New here? Take the 2-minute tour
           </h2>
           <p id={bodyId} className={s.body}>
-            It walks through the demo script: catch a wrong promise, see why the rules decided, recover with the safe reply, handle an
-            unknown rail and edit a source live. You can skip at any step.
+            Catch a wrong reply at Send, see why the rules held it, send the right one, handle an unknown rail and edit a doc live. Skip at any
+            step.
           </p>
           <div className={s.nav}>
-            <button type="button" className={cx(ui.btn, ui.sm, ui.ghost)} onClick={onClose}>
+            <button type="button" className={cx(s.tbtn, s.tghost)} onClick={onClose}>
               Not now
             </button>
             <span className={s.spacer} />
-            <button type="button" className={cx(ui.btn, ui.sm, ui.primary)} onClick={onStart}>
-              <Compass aria-hidden="true" />
+            <button type="button" className={s.tbtn} onClick={onStart}>
               Start tour
             </button>
           </div>
@@ -294,10 +285,24 @@ export function GuidedTour({
   if (!step) return null;
   const n = state.step + 1;
   const last = n === TOUR_STEPS;
-  const t9001 = ag.ticket?.id === "TCK-9001";
-  const blocked = t9001 && ag.sendState.kind === "blocked";
-  const sent = t9001 && ag.sendState.kind === "sent";
-  const hasSuggestion = t9001 && Boolean(ag.stored?.result.suggestion);
+  const t1 = ag.ticket?.id === "TCK-9001";
+  const t2 = ag.ticket?.id === "TCK-9002";
+  const sent = t1 && ag.sendState.kind === "sent";
+  const hasHold = t1 && ag.stored?.result.decision === "HOLD";
+
+  const sendFor = (id: string, label: string) => (
+    <button
+      type="button"
+      className={s.tbtn}
+      disabled={busy}
+      onClick={() => {
+        if (ag.ticket?.id !== id || !ag.draft.trim()) ag.actions.prepareTicket(id, CANONICAL_DRAFT);
+        void ag.actions.send();
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <>
@@ -323,37 +328,71 @@ export function GuidedTour({
           {step.body}
         </p>
 
+        {state.step === 0 ? (
+          <div className={s.actions}>
+            {held(ag, "TCK-9001") ? (
+              <span className={s.done}>
+                <CircleCheck aria-hidden="true" />
+                Held. Nothing reached Ayesha, and one wrong reply is counted as stopped.
+              </span>
+            ) : (
+              sendFor("TCK-9001", "Press Send for me")
+            )}
+          </div>
+        ) : null}
+
+        {state.step === 1 && !hasHold ? (
+          <div className={s.actions}>
+            <span className={s.note}>There&apos;s no held reply for Ayesha yet.</span>
+            <button
+              type="button"
+              className={s.tbtn}
+              disabled={busy}
+              onClick={() => {
+                if (!t1 || !ag.draft.trim()) ag.actions.prepareTicket("TCK-9001", CANONICAL_DRAFT);
+                void ag.actions.send().then(() => agRef.current.actions.setView("why"));
+                if (overlay) ag.actions.setPanelOpen(true);
+              }}
+            >
+              Press Send for me, then explain
+            </button>
+          </div>
+        ) : null}
+
         {state.step === 2 ? (
           <div className={s.actions}>
             {sent ? (
               <span className={s.done}>
                 <CircleCheck aria-hidden="true" />
-                The safe reply was sent. One intercept is in Impact.
+                Sent · checked by Slite Agent. The Demo menu now shows one wrong reply stopped.
               </span>
-            ) : blocked ? (
+            ) : hasHold && ag.stored?.result.suggestion ? (
               <button
                 type="button"
-                className={cx(ui.btn, ui.sm, ui.primary)}
-                disabled={busy || !hasSuggestion}
+                className={s.tbtn}
+                disabled={busy}
                 onClick={() => {
                   ag.actions.applySafeReply();
                   void ag.actions.send();
                 }}
               >
-                Use the safe reply and send it
+                Use this reply and send it
               </button>
             ) : (
-              <button
-                type="button"
-                className={cx(ui.btn, ui.sm, ui.primary)}
-                disabled={busy}
-                onClick={() => {
-                  if (!t9001 || ag.draft !== CANONICAL_DRAFT) ag.actions.prepareTicket("TCK-9001", CANONICAL_DRAFT);
-                  void ag.actions.send();
-                }}
-              >
-                Try to send the wrong draft
-              </button>
+              <span className={s.note}>Go back to step 1 to hold Ayesha&apos;s wrong reply first.</span>
+            )}
+          </div>
+        ) : null}
+
+        {state.step === 3 ? (
+          <div className={s.actions}>
+            {t2 && ag.sendState.kind === "blocked" ? (
+              <span className={s.done}>
+                <CircleCheck aria-hidden="true" />
+                Ask first: the holding reply has no timeline.
+              </span>
+            ) : (
+              sendFor("TCK-9002", "Press Send for me")
             )}
           </div>
         ) : null}
@@ -363,31 +402,26 @@ export function GuidedTour({
             {applied && !busy ? (
               <span className={s.done}>
                 <CircleCheck aria-hidden="true" />
-                DOC-103 v2 saved as a draft and the check reran.
+                Saved and re-checked: Double-check, because the doc changed after it was verified.
               </span>
             ) : ag.overrides["DOC-103"] ? (
               <>
-                <span className={s.note}>DOC-103 is already edited in this workspace, so the before/after won&apos;t show.</span>
-                <button
-                  type="button"
-                  className={cx(ui.btn, ui.sm)}
-                  disabled={busy}
-                  onClick={() => ag.actions.restoreSource("DOC-103")}
-                >
-                  Restore DOC-103 to its seed version
+                <span className={s.note}>This doc is already edited in this demo, so the before and after won&apos;t show.</span>
+                <button type="button" className={cx(s.tbtn, s.tout)} disabled={busy} onClick={() => ag.actions.restoreSource("DOC-103")}>
+                  Restore the doc to its seed version
                 </button>
               </>
             ) : (
               <button
                 type="button"
-                className={cx(ui.btn, ui.sm, ui.primary)}
+                className={s.tbtn}
                 disabled={busy}
                 onClick={() => {
                   if (ag.actions.applyB7()) setApplied(true);
                   if (overlay) ag.actions.setPanelOpen(true);
                 }}
               >
-                Apply the edit (2 business days, Save draft)
+                Apply the edit (2 business days)
               </button>
             )}
           </div>
@@ -396,27 +430,23 @@ export function GuidedTour({
         {busy ? (
           <span className={s.busy} aria-live="polite">
             <span className={s.spin} aria-hidden="true" />
-            Working…
+            Checking…
           </span>
         ) : null}
 
         <div className={s.nav}>
-          <button type="button" className={cx(ui.btn, ui.sm, ui.ghost)} onClick={onClose}>
+          <button type="button" className={cx(s.tbtn, s.tghost)} onClick={onClose}>
             Skip tour
           </button>
           <span className={s.hint}>Esc to close</span>
           <span className={s.spacer} />
           {n > 1 ? (
-            <button type="button" className={cx(ui.btn, ui.sm)} onClick={() => onStep(state.step - 1)}>
+            <button type="button" className={cx(s.tbtn, s.tout)} onClick={() => onStep(state.step - 1)}>
               <ArrowLeft aria-hidden="true" />
               Back
             </button>
           ) : null}
-          <button
-            type="button"
-            className={cx(ui.btn, ui.sm, ui.primary)}
-            onClick={() => (last ? onClose() : onStep(state.step + 1))}
-          >
+          <button type="button" className={s.tbtn} onClick={() => (last ? onClose() : onStep(state.step + 1))}>
             {last ? "Finish" : "Next"}
             {last ? null : <ArrowRight aria-hidden="true" />}
           </button>

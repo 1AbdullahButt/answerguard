@@ -39,45 +39,42 @@ const pause = (page: Page, ms: number) => page.waitForTimeout(ms);
 async function demo(page: Page) {
   await page.goto(base);
   await page.getByRole("contentinfo").waitFor();
-  // Dismiss the auto-offered tour if it appears; the GIF shows the flow itself.
-  const skip = page.getByRole("button", { name: /^Skip/ });
-  if (await skip.isVisible({ timeout: 1500 }).catch(() => false)) await skip.click();
+  // Dismiss the first-visit tour offer if it appears; the GIF shows the flow itself.
+  const notNow = page.getByRole("button", { name: "Not now" });
+  if (await notNow.isVisible({ timeout: 1500 }).catch(() => false)) await notNow.click();
   await pause(page, 600);
 
-  // 1. Catch: TCK-9001, 4-day draft → HOLD
-  await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Ayesha K\./ }).click();
-  const composer = page.getByRole("textbox", { name: "Reply to customer" });
+  // 1. Catch: TCK-9001, 4-day draft → Send runs the check → held
+  await page.getByRole("navigation", { name: "Conversations" }).getByRole("button", { name: /Ayesha K\./ }).click();
+  const composer = page.getByRole("textbox", { name: "Your reply" });
   await composer.fill(DRAFT);
   await pause(page, 700);
-  await page.getByRole("button", { name: "Check answer", exact: true }).click();
+  await page.getByRole("button", { name: "Send", exact: true }).click();
   await page.getByRole("region", { name: "Decision" }).getByText("Hold").first().waitFor();
-  await pause(page, 2200);
+  await pause(page, 2400);
 
-  // 2. Why: Reasoning tab
-  await page.getByRole("tab", { name: "Reasoning", exact: true }).click();
-  await pause(page, 2600);
-  await page.getByRole("tab", { name: "Check", exact: true }).click();
+  // 2. Why: plain explanation
+  await page.getByRole("button", { name: "Why?", exact: true }).click();
+  await pause(page, 2800);
+  await page.getByRole("button", { name: "Back to the decision" }).click();
   await pause(page, 500);
 
-  // 3. Recover: blocked send → safe reply → sent
-  await page.getByRole("button", { name: "Send", exact: true }).click();
-  await page.getByRole("alert").filter({ hasText: "Send blocked" }).waitFor();
-  await pause(page, 1600);
-  await page.getByRole("button", { name: "Use safe reply", exact: true }).click();
+  // 3. Recover: use the checked reply → sent
+  await page.getByRole("button", { name: "Use this reply", exact: true }).click();
   await pause(page, 900);
   await page.getByRole("button", { name: "Send", exact: true }).click();
-  await page.getByRole("status").filter({ hasText: "Sent" }).waitFor();
-  await pause(page, 1500);
-
-  // 4. Ambiguity: TCK-9002 → ESCALATE
-  await page.getByRole("navigation", { name: "Inbox" }).getByRole("button", { name: /Usman R\./ }).click();
-  await composer.fill(DRAFT);
-  await page.getByRole("button", { name: "Check answer", exact: true }).click();
-  await page.getByRole("region", { name: "Decision" }).getByText("Escalate").first().waitFor();
+  await page.getByRole("status").filter({ hasText: "Sent · checked by Slite Agent" }).waitFor();
   await pause(page, 2200);
 
-  // 5. Impact
-  await page.getByRole("tab", { name: "Impact", exact: true }).click();
+  // 4. Ambiguity: TCK-9002 (rail unknown) → Ask first
+  await page.getByRole("navigation", { name: "Conversations" }).getByRole("button", { name: /Usman R\./ }).click();
+  await composer.fill(DRAFT);
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("region", { name: "Decision" }).getByText("Ask first").first().waitFor();
+  await pause(page, 2400);
+
+  // 5. Demo menu: impact
+  await page.getByRole("button", { name: "Demo menu", exact: true }).click();
   await pause(page, 2000);
 }
 

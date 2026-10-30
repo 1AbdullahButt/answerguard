@@ -1,407 +1,174 @@
-/* Shared atoms ported from the approved mockups (design/mockup-*.html). */
+/* Design v2 atoms: pill buttons, tags, the mark. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: var(--r);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  font-size: 13px;
-  font-weight: 550;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
   white-space: nowrap;
-  color: var(--text);
   text-decoration: none;
-}
-.btn:hover {
-  background: var(--surface-2);
+  border: 1.5px solid var(--ink);
+  transition: background 0.15s, color 0.15s;
 }
 .btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex: none;
 }
-.sm {
-  height: 26px;
-  padding: 0 9px;
-  font-size: 12.5px;
-}
-.sm svg {
-  width: 14px;
-  height: 14px;
-}
 .primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--ink);
   color: #fff;
 }
 .primary:hover {
-  background: var(--accent-hover);
+  background: #1f2024;
+  color: #fff;
 }
-.ghost {
-  border-color: transparent;
-  background: none;
-  color: var(--muted);
+.outline {
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
 }
-.ghost:hover {
-  background: var(--surface-3);
-  color: var(--text);
+.outline:hover {
+  background: var(--soft);
+  color: var(--ink);
 }
 .btn:disabled {
-  color: var(--faint);
-  background: var(--surface-3);
-  border-color: var(--border);
-  cursor: not-allowed;
+  background: var(--line);
+  border-color: var(--line);
+  color: var(--muted);
 }
-.iconbtn {
+.sm {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.lg {
+  height: 50px;
+  font-size: 16px;
+}
+.block {
+  width: 100%;
+}
+
+/* round icon button (back arrows) */
+.round {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--soft);
   border: 0;
-  background: none;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r);
   display: inline-grid;
   place-items: center;
-  color: var(--muted);
+  color: var(--ink);
   flex: none;
 }
-.iconbtn:hover {
-  background: var(--surface-3);
-  color: var(--text);
+.round svg {
+  width: 18px;
+  height: 18px;
 }
-.iconbtn svg {
-  width: 16px;
-  height: 16px;
-}
-.link {
-  color: var(--accent);
-  font-weight: 550;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: none;
-  border: 0;
-  padding: 0;
-  font-size: inherit;
-}
-.link:hover {
-  text-decoration: underline;
-}
-.link svg {
-  width: 14px;
-  height: 14px;
-}
-.kbd {
-  font: 500 11px/1 var(--font);
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 2px 4px;
-  background: var(--surface);
+.round:hover {
+  background: #eceef2;
 }
 
-/* status pill */
-.st {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 650;
-  font-size: 12px;
-  line-height: 20px;
-  padding: 0 8px 0 6px;
-  border-radius: 999px;
-  border: 1px solid;
-  white-space: nowrap;
-}
-.st svg {
-  width: 14px;
-  height: 14px;
-  flex: none;
-}
-.stSmall {
-  line-height: 16px;
-  font-size: 11px;
-  padding: 0 6px 0 4px;
-}
-.stSmall svg {
-  width: 12px;
-  height: 12px;
-}
-.allow {
-  color: var(--allow);
-  background: var(--allow-bg);
-  border-color: var(--allow-bd);
-}
-.caution {
-  color: var(--caution);
-  background: var(--caution-bg);
-  border-color: var(--caution-bd);
-}
-.caution svg {
-  color: var(--caution-icon);
-}
-.hold {
-  color: var(--hold);
-  background: var(--hold-bg);
-  border-color: var(--hold-bd);
-}
-.esc {
-  color: var(--esc);
-  background: var(--esc-bg);
-  border-color: var(--esc-bd);
-}
-.off {
-  color: var(--text);
-  background: var(--surface-3);
-  border-color: var(--border);
-}
-
-/* who-did-what labels: AI = dashed outline + sparkles; Rule = solid ink fill + scales */
-.lab {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10.5px;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  line-height: 18px;
-  padding: 0 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex: none;
-}
-.lab svg {
-  width: 11px;
-  height: 11px;
-}
-.labAi {
-  color: #4a4a48;
-  background: var(--surface);
-  border: 1px dashed #8a8a86;
-}
-.labRule {
-  color: #fff;
-  background: var(--ink);
-  border: 1px solid var(--ink);
-}
-
-/* signal chips */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  min-width: 0;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  line-height: 20px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: #3f3f3d;
-  font-weight: 500;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.chip svg {
-  width: 12px;
-  height: 12px;
-  color: var(--muted);
-  flex: none;
-}
-.chipOk svg {
-  color: var(--allow);
-}
-.chipWarn {
-  border-color: var(--caution-bd);
-  background: var(--caution-bg);
-  color: var(--caution);
-}
-.chipWarn svg {
-  color: var(--caution-icon);
-}
-.chipBad {
-  border-color: var(--hold-bd);
-  background: var(--hold-bg);
-  color: var(--hold);
-}
-.chipBad svg {
-  color: var(--hold);
-}
-
-/* standing chips */
-.stand {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 0 7px;
-  line-height: 20px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex: none;
-}
-.stand svg {
-  width: 12px;
-  height: 12px;
-}
-.standGov {
-  background: var(--ink);
-  color: #fff;
-}
-.standCand {
-  background: var(--surface-3);
-  color: #3f3f3d;
-}
-.standProp,
-.standNye {
-  background: var(--surface);
-  color: #3f3f3d;
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-}
-.standExcl {
-  background: var(--surface);
-  color: var(--muted);
-  box-shadow: inset 0 0 0 1px var(--border);
-  text-decoration: line-through;
-}
-
-/* mode badge */
-.modebadge {
+/* tags */
+.tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 26px;
-  padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  padding: 3px 10px;
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 500;
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.modebadgeSmall {
-  height: 22px;
-  padding: 0 8px;
-}
-.modePaused {
-  border-color: var(--caution-bd);
-  background: var(--caution-bg);
-  color: var(--caution);
-}
-.modePaused svg {
-  width: 13px;
-  height: 13px;
-  color: var(--caution-icon);
+.tag svg {
+  width: 14px;
+  height: 14px;
   flex: none;
 }
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--faint);
-  flex: none;
+.tagGood {
+  background: var(--good-bg);
+  color: var(--good);
 }
-.dotSaved {
-  background: #7a7a76;
+.tagAsk {
+  background: var(--ask-bg);
+  color: var(--ask);
 }
-.dotLive {
-  background: var(--allow);
+.tagAmber {
+  background: var(--tag-amber);
+  color: var(--check);
 }
-.dotOff {
-  background: var(--hold);
+.tagNeutral {
+  background: var(--soft);
+  color: var(--text);
 }
-.dotNone {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--faint);
+.tagInk {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
 }
 
-/* switch */
-.switch {
+/* outcome word in a white pill */
+.outcomeTag {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-  background: none;
-  border: 0;
-  padding: 2px 0;
-  text-align: left;
-  border-radius: var(--r);
-}
-.sw {
-  width: 28px;
-  height: 16px;
+  gap: 6px;
+  background: #fff;
   border-radius: 999px;
-  background: #8f8f8b;
-  position: relative;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.outcomeTag svg {
+  width: 14px;
+  height: 14px;
   flex: none;
 }
-.sw::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: left 0.15s var(--ease);
+.toneGood {
+  color: var(--good);
 }
-.switch[aria-checked="true"] .sw {
-  background: var(--accent);
+.toneCheck {
+  color: var(--check);
 }
-.switch[aria-checked="true"] .sw::after {
-  left: 14px;
+.toneHold {
+  color: var(--hold);
+}
+.toneAsk {
+  color: var(--ask);
+}
+.toneOff {
+  color: var(--text);
 }
 
 .mark {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: var(--accent);
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--mark);
   display: grid;
   place-items: center;
   flex: none;
 }
-.mark svg {
-  width: 15px;
-  height: 15px;
+.markSm {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
 }
-.markSmall {
-  width: 22px;
-  height: 22px;
-}
-.modeText {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Phone widths: the badge shows its short label; the full text stays in aria-label/title. */
-.modeShort {
-  display: none;
-}
-@media (max-width: 420px) {
-  .modeText {
-    display: none;
-  }
-  .modeShort {
-    display: inline;
-  }
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
 }

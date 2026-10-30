@@ -17,8 +17,9 @@ import {
   type Metrics,
   type Review,
 } from "./metrics";
-import type { CheckKey, OverrideRecord, SeedResponse, StaleReason, StoredResult, Tab } from "./types";
-import { DECISION_META } from "./format";
+import type { AgentView, CheckKey, OverrideRecord, SeedResponse, StaleReason, StoredResult, Tab } from "./types";
+import { mostSevereClaim } from "./format";
+import { valueAdjective } from "./outcome";
 import {
   clearOverrides,
   loadOverrides,
@@ -34,7 +35,14 @@ export type SendState =
   | { kind: "blocked"; result: CheckResult }
   | { kind: "ack_required"; result: CheckResult }
   | { kind: "unavailable"; result: CheckResult }
-  | { kind: "sent"; customer: string };
+  | { kind: "sent"; customer: string; payoff: Payoff | null };
+
+/** Design v2 "Sent" payoff: shown when a successful send followed a held draft (real values only). */
+export interface Payoff {
+  customer: string;
+  /** e.g. "4-business-day"; null when the held draft had no value. */
+  heldValue: string | null;
+}
 
 export interface SentMessage {
   text: string;
@@ -73,16 +81,18 @@ export function useAnswerGuard() {
   const [sendStates, setSendStates] = useState<Record<string, SendState>>({});
   const [acks, setAcks] = useState<Record<string, boolean>>({});
   const [tab, setTab] = useState<Tab>("check");
+  const [view, setView] = useState<AgentView>("main");
+  const [held, setHeld] = useState<Record<string, string | null>>({});
   const [panelOpen, setPanelOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "thread">("list");
-  const [sourceFocus, setSourceFocus] = useState<{ sourceId: string; quote: string; nonce: number } | null>(null);
+  const [docFocus, setDocFocus] = useState<{ sourceId: string; nonce: number } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pausedDismissed, setPausedDismissed] = useState(false);
   const [lastAi, setLastAi] = useState<CheckResult["ai"] | null>(null);
 
   // Latest values for async callbacks.
-  const ref = useRef({ role, seed, selectedId, drafts, rails, overrides, metrics, results });
-  ref.current = { role, seed, selectedId, drafts, rails, overrides, metrics, results };
+  const ref = useRef({ role, seed, selectedId, drafts, rails, overrides, metrics, results, held });
+  ref.current = { role, seed, selectedId, drafts, rails, overrides, metrics, results, held };
   const abortRef = useRef<AbortController | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -182,6 +192,21 @@ export function useAnswerGuard() {
     timersRef.current = [];
   };
 
+  /** An honest client-side sequence: the server reads the draft, then the docs, then applies the rules, in one request. */
+  const startProgress = useCallback((ticketId: string, sourceCount: number) => {
+    clearTimers();
+    setChecking({ ticketId, step: 0, sourceCount });
+    timersRef.current.push(
+      window.setTimeout(() => setChecking((c) => (c && c.ticketId === ticketId ? { ...c, step: 1 } : c)), 350),
+      window.setTimeout(() => setChecking((c) => (c && c.ticketId === ticketId ? { ...c, step: 2 } : c)), 900),
+    );
+  }, []);
+
+  const stopProgress = useCallback(() => {
+    clearTimers();
+    setChecking(null);
+  }, []);
+
   const buildRequest = useCallback(
     (over?: { overrides?: OverrideMap; role?: Role; ticketId?: string }): { req: CheckRequest; key: CheckKey } | null => {
       const st = ref.current;
@@ -227,14 +252,8 @@ export function useAnswerGuard() {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      clearTimers();
-      const visibleCount = mergeOverrides(ref.current.seed?.sources ?? [], req.overrides).length;
-      setChecking({ ticketId: key.ticketId, step: 0, sourceCount: visibleCount });
-      // An honest client-side sequence: the server does these steps in this order inside one request.
-      timersRef.current.push(
-        window.setTimeout(() => setChecking((c) => (c && c.ticketId === key.ticketId ? { ...c, step: 1 } : c)), 350),
-        window.setTimeout(() => setChecking((c) => (c && c.ticketId === key.ticketId ? { ...c, step: 2 } : c)), 900),
-      );
+      startProgress(key.ticketId, mergeOverrides(ref.current.seed?.sources ?? [], req.overrides).length);
+      setView("main");
       setSendStates((s) => ({ ...s, [key.ticketId]: s[key.ticketId]?.kind === "sent" ? { kind: "idle" } : (s[key.ticketId] ?? { kind: "idle" }) }));
       try {
         const result = await postCheck(req, controller.signal);
@@ -251,37 +270,44 @@ export function useAnswerGuard() {
         showToast(msg);
       } finally {
         if (abortRef.current === controller) {
-          clearTimers();
-          setChecking(null);
+          stopProgress();
           abortRef.current = null;
         }
       }
     },
-    [buildRequest, storeResult, showToast],
+    [buildRequest, storeResult, showToast, startProgress, stopProgress],
   );
 
   useEffect(() => () => clearTimers(), []);
 
   // ---- send ---------------------------------------------------------------------------------------
-  const send = useCallback(async () => {
+  /** Design v2: Send runs the check (POST /api/send reruns it on the server, SPEC §6.8). */
+  const send = useCallback(async (opts?: { acknowledged?: boolean }) => {
     const built = buildRequest();
     if (!built) return;
     const { req, key } = built;
     if (!req.draft.trim()) return;
     const ticketId = key.ticketId;
-    const acknowledged = acks[ticketId] ?? false;
+    const acknowledged = opts?.acknowledged ?? acks[ticketId] ?? false;
     setSendStates((s) => ({ ...s, [ticketId]: { kind: "sending" } }));
+    setView("main");
+    startProgress(ticketId, mergeOverrides(ref.current.seed?.sources ?? [], req.overrides).length);
     try {
       const out = await postSend({ ...req, acknowledged });
       storeResult(key, out.result, null);
       if (out.kind === "sent") {
         const customer = ref.current.seed?.tickets.find((t) => t.id === ticketId)?.customer ?? "the customer";
+        const heldBefore = ref.current.held[ticketId];
+        const payoff: Payoff | null = heldBefore !== undefined ? { customer, heldValue: heldBefore } : null;
+        setHeld((h) => Object.fromEntries(Object.entries(h).filter(([k]) => k !== ticketId)));
         setSent((s) => ({ ...s, [ticketId]: [...(s[ticketId] ?? []), { text: req.draft, at: nowIso() }] }));
         setDrafts((d) => ({ ...d, [ticketId]: "" }));
+        ref.current.drafts = { ...ref.current.drafts, [ticketId]: "" };
         setAcks((a) => ({ ...a, [ticketId]: false }));
-        setSendStates((s) => ({ ...s, [ticketId]: { kind: "sent", customer } }));
+        setSendStates((s) => ({ ...s, [ticketId]: { kind: "sent", customer, payoff } }));
       } else if (out.kind === "blocked") {
         updateMetrics(recordIntercept);
+        setHeld((h) => ({ ...h, [ticketId]: valueAdjective(mostSevereClaim(out.result)?.draftClaim.value ?? null) }));
         setSendStates((s) => ({ ...s, [ticketId]: { kind: "blocked", result: out.result } }));
       } else if (out.kind === "ack_required") {
         setSendStates((s) => ({ ...s, [ticketId]: { kind: "ack_required", result: out.result } }));
@@ -291,8 +317,10 @@ export function useAnswerGuard() {
     } catch (e) {
       setSendStates((s) => ({ ...s, [ticketId]: { kind: "idle" } }));
       showToast(`Send failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      stopProgress();
     }
-  }, [acks, buildRequest, storeResult, updateMetrics, showToast]);
+  }, [acks, buildRequest, storeResult, updateMetrics, showToast, startProgress, stopProgress]);
 
   // ---- editing ------------------------------------------------------------------------------------
   const setDraft = useCallback((text: string) => {
@@ -320,6 +348,7 @@ export function useAnswerGuard() {
   const selectTicket = useCallback((id: string) => {
     setSelectedId(id);
     setMobileView("thread");
+    setView("main");
   }, []);
 
   /**
@@ -333,6 +362,7 @@ export function useAnswerGuard() {
     ref.current.rails = { ...ref.current.rails, [id]: t.rail };
     setSelectedId(id);
     setMobileView("thread");
+    setView("main");
     setRails((r) => ({ ...r, [id]: t.rail }));
     if (draft !== undefined) {
       ref.current.drafts = { ...ref.current.drafts, [id]: draft };
@@ -477,8 +507,9 @@ export function useAnswerGuard() {
     setOverrides({});
     ref.current.overrides = {};
     setMetrics(emptyMetrics());
-    setSourceFocus(null);
-    showToast("Workspace reset: seed sources restored and this browser's metrics cleared.");
+    setDocFocus(null);
+    setHeld({});
+    showToast("Demo reset: seed docs restored and this browser's numbers cleared.");
   }, [showToast]);
 
   const review = useCallback(
@@ -486,12 +517,11 @@ export function useAnswerGuard() {
     [updateMetrics],
   );
 
-  const openQuote = useCallback((sourceId: string, quote: string) => {
-    setSourceFocus({ sourceId, quote, nonce: Date.now() });
-    setTab("sources");
+  /** Trace → "Open the docs": the Docs tab with the given doc selected. */
+  const openDoc = useCallback((sourceId: string) => {
+    setDocFocus({ sourceId, nonce: Date.now() });
+    setTab("docs");
   }, []);
-
-  const decisionLabel = stored ? DECISION_META[stored.result.decision].label : null;
 
   return {
     role,
@@ -511,7 +541,8 @@ export function useAnswerGuard() {
     tab,
     panelOpen,
     mobileView,
-    sourceFocus,
+    docFocus,
+    view,
     toast,
     pausedDismissed,
     lastAi,
@@ -521,9 +552,9 @@ export function useAnswerGuard() {
     deletedSources,
     editedCount,
     sent: ticket ? (sent[ticket.id] ?? []) : [],
-    decisionLabel,
     railOf,
     isStale,
+    sendStateOf: (id: string): SendState => sendStates[id] ?? { kind: "idle" },
     actions: {
       loadSeed: () => loadSeed(ref.current.role),
       selectTicket,
@@ -542,13 +573,13 @@ export function useAnswerGuard() {
       restoreSeedVersions,
       resetWorkspace,
       review,
-      openQuote,
+      openDoc,
+      setView,
       setTab,
       setPanelOpen,
       setMobileView,
       dismissToast: () => setToast(null),
       dismissPaused: () => setPausedDismissed(true),
-      clearSourceFocus: () => setSourceFocus(null),
     },
   };
 }

@@ -5,32 +5,47 @@
     "violations": []
   },
   {
-    "state": "check-hold",
+    "state": "held",
     "width": 1440,
     "violations": []
   },
   {
-    "state": "reasoning",
+    "state": "why",
     "width": 1440,
     "violations": []
   },
   {
-    "state": "sources",
+    "state": "trace",
     "width": 1440,
     "violations": []
   },
   {
-    "state": "impact",
+    "state": "docs",
     "width": 1440,
     "violations": []
   },
   {
-    "state": "stale",
+    "state": "double-check",
     "width": 1440,
     "violations": []
   },
   {
-    "state": "escalate",
+    "state": "ask-first",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "not-sent",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "sent",
+    "width": 1440,
+    "violations": []
+  },
+  {
+    "state": "demo-menu",
     "width": 1440,
     "violations": []
   },
@@ -40,32 +55,47 @@
     "violations": []
   },
   {
-    "state": "check-hold",
+    "state": "held",
     "width": 1024,
     "violations": []
   },
   {
-    "state": "reasoning",
+    "state": "why",
     "width": 1024,
     "violations": []
   },
   {
-    "state": "sources",
+    "state": "trace",
     "width": 1024,
     "violations": []
   },
   {
-    "state": "impact",
+    "state": "docs",
     "width": 1024,
     "violations": []
   },
   {
-    "state": "stale",
+    "state": "double-check",
     "width": 1024,
     "violations": []
   },
   {
-    "state": "escalate",
+    "state": "ask-first",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "not-sent",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "sent",
+    "width": 1024,
+    "violations": []
+  },
+  {
+    "state": "demo-menu",
     "width": 1024,
     "violations": []
   },
@@ -75,32 +105,47 @@
     "violations": []
   },
   {
-    "state": "check-hold",
+    "state": "held",
     "width": 390,
     "violations": []
   },
   {
-    "state": "reasoning",
+    "state": "why",
     "width": 390,
     "violations": []
   },
   {
-    "state": "sources",
+    "state": "trace",
     "width": 390,
     "violations": []
   },
   {
-    "state": "impact",
+    "state": "docs",
     "width": 390,
     "violations": []
   },
   {
-    "state": "stale",
+    "state": "double-check",
     "width": 390,
     "violations": []
   },
   {
-    "state": "escalate",
+    "state": "ask-first",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "not-sent",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "sent",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "state": "demo-menu",
     "width": 390,
     "violations": []
   }

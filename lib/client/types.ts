@@ -35,6 +35,9 @@ export interface StoredResult {
   changedFrom: { decision: CheckResult["decision"]; because: string } | null;
 }
 
-export type Tab = "check" | "reasoning" | "sources" | "impact";
+export type Tab = "check" | "docs";
+
+/** What the Check tab shows on top of the decision (design v2: "Why?" and the rule trace open inside Check). */
+export type AgentView = "main" | "why" | "trace";
 
 export type StaleReason = "draft" | "rail" | "persona" | "workspace" | null;
