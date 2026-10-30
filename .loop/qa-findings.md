@@ -1,33 +1,65 @@
-# QA findings · Phase 4 pre-deploy (re-review) · 2026-10-30T19:35:19Z
+# QA findings · Phase 4 final gate (deployed) · 2026-10-30T19:56:58Z
+
+Target: https://answerguard.vercel.app (Vercel, CLI deploy per D-025). HEAD `3a3ff86`. `git worktree list` → `D:/Project/slite 3a3ff86 [main]` (only). No local servers were started for this review.
 
 ## Commands run
-- `git worktree list` → `D:/Project/slite e3f21ac [main]` (only). Before and after: no listeners on :3100/:3200. QA's :3200 server was stopped with `taskkill /T /F` on its shell PID, and netstat confirmed it was gone.
-- `pnpm typecheck` → exit 0
-- `pnpm test` → exit 0 · `Test Files 12 passed (12)` · `Tests 105 passed (105)`
-- `pnpm exec playwright test` (cold, saved mode) → exit 0 · `ok 1 … Impact shows 1 intercept` · `1 passed (1.8m)`
-- `pnpm exec tsx scripts/ui-audit.ts --serve` → exit 0 · `stale 1440/1024/390 axe: none` · `Serious/critical axe violations: 0. Horizontal page scroll: none.` Its server was gone afterwards.
-- precommit-scan, throwaway repo with random fake keys generated at runtime. One file staged at a time:
-  - Blocked (exit 1): raw `AIza…` in .ts; `GEMINI_API_KEY=AIza…` in .md; `const GEMINI_API_KEY = "<48 hex>"`; `GROQ_API_KEY=<hex>`; `UPSTASH_REDIS_REST_TOKEN=<hex>`; `DB_PASSWORD: <hex>`.
-  - Clean (exit 0): empty `GEMINI_API_KEY=`/`GROQ_API_KEY=`; `process.env.GEMINI_API_KEY`; `GROQ_MODEL=openai/gpt-oss-120b`; the full .env.example; a short `SOME_TOKEN=abc123`.
-  - False-positive check: all 197 committable files staged in a throwaway repo → `precommit-scan: clean (197 staged files checked)`, so the real commit won't be falsely blocked.
-- QA tour driver (scratchpad tour2.cjs / esc.cjs, saved mode, :3200):
-  - Fix 3, Back → Next: apply B7 in step 5 → Back → Next fires 0 checks on entry. The tour shows "DOC-103 is already edited in this workspace, so the before/after won't show." with a visible "Restore DOC-103 to its seed version" button and Apply hidden. Restore → 1 check, overrides `{}`, Apply visible. Apply → "Hold | Caution | Changed because DOC-103 v2 saved as a draft".
-  - Fix 3, pre-edited DOC-103 (B1 Save and verify before the tour): step 5 shows the same message and the Restore button. Minor caveat: step 1 still narrates "1 business day" while the banner says "Hold … 2 business days", which is accurate for that workspace.
-  - Fix 4, Esc in the Reset dialog with the tour open: before Esc, tour open = 1, reset dialog = 1, focus on Cancel. After Esc, **tour open = 0**, reset dialog = 0. Control: closing the dialog with Cancel keeps the tour open (1).
-  - Fix 4, persona tooltip: focus on "About personas", tooltip visible/1, tour open = 1. After Esc, **tour open = 0**, tooltip hidden.
-  - 390 top bar: `markVisible: true, tourBtn: true, badge "Idle", hScroll: false, overflowHeader: false`. The screenshot shows mark · persona switch · info · tour · reset · badge.
-  - Stale pill: after check → safe reply → Send, axe at 1440 shows none. The screenshot shows the "Allow" pill at full contrast with a dashed outline.
-  - Console errors: none.
-- README.md:83: "a provider spend limit on a dedicated demo key (its behaviour, hard stop vs alert, is confirmed and recorded at deploy)".
+- `curl https://answerguard.vercel.app/` → 200, `Server: Vercel`.
+- **Bundle secret scan.** Fetched the HTML, the 9 referenced `/_next/static` JS/CSS chunks and any chunks referenced inside them (0 extra), 664 KB in total.
+  - `gsk_`, `AIza`, `GEMINI_API_KEY=`, `GROQ_API_KEY=` and `sk-ant-`: 0 hits.
+  - Entropy scan of quoted literals ≥24 chars next to key/token/secret/auth, and of all ≥32-char literals with entropy >4.5: 0 candidates.
+  - DOC-105 / "Fraud Hold" / "Compliance: Fraud": only the required persona tooltip sentence "DOC-105 is synthetic…".
+- **Live API.**
+  - `GET /api/seed?role=support_agent` → DOC-101, DOC-103, SRC-202, DOC-104; 0 DOC-105 mentions. `role=ops_lead` → includes DOC-105.
+  - `POST /api/check` canonical drafts:
+    - TCK-9001 → `HOLD CONTRADICTS_GOVERNING`, suggestion "…within 1 business day."
+    - TCK-9002 → `ESCALATE SCOPE_UNKNOWN`, holding reply.
+    - TCK-9003 → `ALLOW SUPPORTED`.
+    - All three `ai.mode: saved` (groq / openai/gpt-oss-120b, prompt 2026-10-30.2), with no DOC-105 in any response.
+  - One novel draft (a single live call) → `ALLOW`, `ai: {mode: live, provider: groq, latencyMs: 1014}`, 0 rejected extractions. Live AI is configured; saved responses carry the canonical path.
+- **Live Playwright** (scratchpad live.cjs; all edits use the exact variant bodies, so they replay saved responses):
+  - TCK-9001 Hold. Send → 409 "Send blocked · Hold … Recorded as an intercept." Use safe reply → Send → "Sent".
+  - B1 Save and verify → "Hold … reverse in 2 business days", and the safe reply says 2.
+  - B2 Save and verify → "Caution … a change is signalled".
+  - B3 Save and verify → "Escalate … applicable sources disagree and no rule can pick a winner".
+  - B7 Save draft → "Caution … probably 2 business days … verification is in doubt".
+  - Caution: the acknowledgement checkbox is visible; Send is disabled until it is ticked, then sends.
+  - Impact: "Simulated · this browser", the three metric groups, the definitions and "not measured Slite results". The false-alarm guard shows "Not enough reviewed flags yet" at n=1. Reset clears metrics as specified, which is why intercepts read 0 after the variant resets.
+  - Persona: Ops lead sees DOC-105 in Sources. After switching back to Support agent, the DOM has 0 DOC-105 or title hits on all 4 tabs.
+  - Footer at 1440, 1024 and 390, on the inbox and on all 4 tabs: "Independent concept for Slite Agent · synthetic data · not affiliated with Slite", in view and unclipped. At 390 it wraps to 2 lines.
+  - axe with TCK-9002 Escalate open: none at all three widths; no horizontal scroll.
+  - The 390 phone smoke test passed: the bottom sheet opens from the composer toggle, and the top bar shows the mark, persona, info, tour, reset and the "Saved" badge.
+  - Guided tour, live:
+    - 1440: all 5 steps (Catch → Why → Recover with blocked + sent → Ambiguity → Live proof, applied → Caution). The card stays in view; Finish returns focus to "Guided tour".
+    - 1024 and 390: all 5 steps, card in view, focus returns.
+    - Esc in the Reset dialog closes only the dialog (tour stays open). Esc on the persona tooltip closes only the tooltip; a second Esc closes the tour. This confirms the previous minor is fixed live.
+  - Console: only the browser's resource lines for the deliberate 409s.
+- **CI.** `gh run list` → latest run 41118583389 on headSha `3a3ff861…` (= HEAD) completed, success, 1m52s. The job log shows:
+  - all 12 vitest files, including tests/engine t1-hold, t2-allow, t3-escalate, t4-recency, t5-permissions, t6-send-integrity, t7-injection, t8-extraction-gap and tests/ai/cache-identity: `Test Files 12 passed (12)`, `Tests 105 passed (105)`;
+  - `Decision accuracy: 100.0% (12/12)`, `Gate … PASS`;
+  - `✓ 1 [chromium] › e2e/demo.spec.ts:8:5 …`, `1 passed (25.5s)`.
+  - The previous run (41117036374) also succeeded.
+- **README** (147 lines):
+  - The live URL https://answerguard.vercel.app is at line 14.
+  - Line 83 contains, verbatim: "Both keys are free tier with no billing account linked, so there is nothing to spend. When the quota runs out, requests are refused (429). That's a hard stop at $0."
+  - The eval table (Groq 36/36, 39/39, 180/180 PASS; Gemini 36/36, 38/38, 180/180 PASS) matches evals/results.md lines 12-14 and 35-37.
+  - It covers the problem, the mermaid architecture, AI vs rules, tests, eval, limitations (including "No shared rate limiter … Upstash skipped, D-025"), "what not to claim" and docs/demo.gif (verified last review).
+- **Secrets locally.** `.vercelignore` excludes `.env*` (except .env.example), `.loop/`, `.claude/`, local screenshots and demo.webm. `.gitignore` still ignores `.env*` (line 4) and `.vercel` (line 6). `git check-ignore` confirms .env.local and .vercel/project.json are ignored.
+
+## SPEC §18 checklist
+1. Public URL, no setup, saved responses keep the canonical path working: **PASS** (HOLD/ESCALATE/ALLOW in saved mode; live path proven with one call).
+2. All 8 tests + e2e pass in CI; eval published in README: **PASS** (run 41118583389 at HEAD; README table = results.md).
+3. The 3 dynamic-proof edits change the outcome live: **PASS** (B1 Hold at 2 days, B2 Caution, B3 Escalate, plus B7 Caution).
+4. Disclaimer visible on every screen: **PASS** (1440/1024/390, all tabs).
+5. README covers everything required, with a demo GIF: **PASS**. The walkthrough video link is still a placeholder (expected; Abdullah records it).
+
+Brief Phase 4 extras: send flow (409, acknowledgement) PASS · Impact PASS · tour PASS · phone smoke test PASS · bundle secret scan PASS · persona filter live PASS · `.vercelignore` PASS.
 
 ## Findings
-- [severity: minor] components/tour/GuidedTour.tsx:211-221 · expected (fix 4 / D-023): Esc inside the Reset dialog or on the persona tooltip closes only that control · actual: it closes the tour too (see the measurements above). Cause: React runs the dialog's or tooltip's own Esc handler (App.tsx:53 `onCancel`, RoleSwitch.tsx:68 `setTip(false)`) and flushes that update *before* the native event reaches the tour's `document` listener. By then the Reset dialog is unmounted and focus is no longer inside it. For the tooltip, focus is on the "About personas" button, which is never inside `[role="tooltip"]`. So `inOtherDialog` is false both times. Fix: have those handlers call `e.preventDefault()` (the listener already checks `e.defaultPrevented`), or register the tour listener in the capture phase and record the target before React handles it. The impact is low: the tour can be reopened and nothing is lost.
-- [severity: minor] carried over · CI depends on the still-untracked lib/workspace/variantBodies.ts, components/tour/*, docs/demo.gif and scripts/record-demo.ts. Commit them together with the modified files, as noted.
-
-Previous majors verified fixed:
-1. Stale pill contrast: no opacity, dashed outline, axe clean in the new audit state and in the real send flow.
-2. Secret scan: Gemini and env-style patterns block every test case, with no false positives on the repo.
-
-Fix 3 is verified for both scenarios, fix 5 (390 top bar) is verified, and fix 6 (README spend-limit wording) is verified.
+- [severity: minor] README.md:15 · the walkthrough video link is a placeholder ("_link added after recording._"). It is expected and not a blocker; update it when Abdullah records the video.
+- [severity: minor] live 503 path · not reproduced on the live site, because doing so would mean exhausting the Groq/Gemini free-tier quota. The 503 "AI unavailable: not sent … Not counted as an intercept" UI and server path were verified locally in Phase 3 (an arbitrary draft in saved mode → 503, intercepts unchanged). Please do a live check once quota naturally runs out, or accept the local evidence.
+- [severity: minor] D-025 · the shared limiter is skipped (approved). The in-memory limiter is per serverless instance, and this is documented in the README limitations. A bare non-`AIza` Gemini key value in code would not be caught by prefix; this is documented, and the env-style pattern covers the normal case.
+- [severity: minor] working tree · an uncommitted `.gitignore` change removes the duplicate `.vercel` / `.env*` lines that `vercel link` appended. It is harmless (both are still ignored at lines 4 and 6, and dropping the trailing `.env*` stops it overriding `!.env.example`); commit it.
+- [severity: minor] .github/workflows/ci.yml · GitHub annotations: actions/checkout@v4, setup-node@v4 and pnpm/action-setup@v4 target the deprecated Node 20 runtime, and ubuntu-latest is moving to Ubuntu 26. Not failing now; bump the actions when convenient.
+- Note: the deploy is made via the CLI, so QA can't prove from GitHub that the live build is byte-for-byte HEAD. Its behaviour matches HEAD, including the Esc fix.
 
 ## VERDICT: APPROVED

@@ -303,3 +303,73 @@ Serious/critical axe violations: 0. Horizontal page scroll: none.
 ```
 
 Status: waiting for deploy setup (`.loop/await-human.md`).
+
+**Deploy (D-025):**
+- Vercel project `answerguard` under the account's default team, deployed with the CLI.
+- Live at **https://answerguard.vercel.app**.
+- 7 Production env vars added through stdin; no values printed.
+- Upstash skipped, since it needs a browser terms click; no money is at risk, only quota.
+
+**Live smoke test** (curl against https://answerguard.vercel.app):
+```
+GET / → 200 (1.41s)
+seed support_agent: DOC-101,DOC-103,SRC-202,DOC-104 | DOC-105 mentions: 0
+seed ops_lead: DOC-101,DOC-103,SRC-202,DOC-104,DOC-105
+check TCK-9001: HOLD CONTRADICTS_GOVERNING | ai: saved, groq openai/gpt-oss-120b | suggestion: ai | HTTP 200 1.26s
+live check (novel draft): ALLOW SUPPORTED | ai: live, groq, latencyMs 1607 | claims: 4 business days (hedged) | HTTP 200 2.24s
+send HOLD draft with forged ALLOW result → HTTP 409
+```
+
+**Live UI audit, desktop and phone** (`pnpm exec tsx scripts/ui-audit.ts https://answerguard.vercel.app`):
+```
+empty       1440px  axe: none
+check-hold  1440px  axe: none
+reasoning   1440px  axe: none
+sources     1440px  axe: none
+impact      1440px  axe: none
+stale       1440px  axe: none
+escalate    1440px  axe: none
+empty       1024px  axe: none
+check-hold  1024px  axe: none
+reasoning   1024px  axe: none
+sources     1024px  axe: none
+impact      1024px  axe: none
+stale       1024px  axe: none
+escalate    1024px  axe: none
+empty        390px  axe: none
+check-hold   390px  axe: none
+reasoning    390px  axe: none
+sources      390px  axe: none
+impact       390px  axe: none
+stale        390px  axe: none
+escalate     390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none.
+LIVE_AUDIT_EXIT=0
+```
+
+**CI on GitHub (latest run):**
+```
+completed	success	Deploy to Vercel: live URL, spend-limit and limiter decisions	CI	main	push	41118583389	1m52s	2026-10-30T19:50:59Z
+```
+
+**QA verdict:** APPROVED (final gate against the deployed URL, `.loop/qa-findings.md`).
+- SPEC §18: all 5 items pass.
+  1. The URL works with no setup: the canonical HOLD/ESCALATE/ALLOW checks come from saved responses, and live Groq works.
+  2. CI is green: 105 tests, saved eval 12/12, e2e passes. The README eval table matches evals/results.md.
+  3. The live dynamic-proof edits behave as specified: B1 → HOLD at 2 days, B2 → CAUTION, B3 → ESCALATE, B7 → CAUTION.
+  4. The disclaimer is on every screen at all three widths.
+  5. The README is complete, with the exact spend-limit wording.
+- Extras: the live send flow and Impact tab work, the tour works at all widths, the Esc fix holds live, and the phone layout is fine.
+- Secrets: none in the 664 KB of deployed JS/CSS.
+- Personas: DOC-105 never reaches Support agent.
+- Open notes (not blocking):
+  - The walkthrough video link is a placeholder; Abdullah records it.
+  - The 503 path wasn't triggered live, to save quota; it was verified locally in Phase 3.
+  - CI warns that some actions target the deprecated Node 20 runtime.
+
+**Worktrees:**
+```
+D:/Project/slite 3a3ff86 [main]
+```
+
+GATE: PASSED
