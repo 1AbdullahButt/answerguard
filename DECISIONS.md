@@ -349,3 +349,14 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
   README images from `public/` (the GIF is mirrored to `public/demo.gif`).
 - README: "Reasoning tab" → Why and Trace views; `docs/demo.gif` re-recorded for the v2 flow.
 - Known, not fixed: at 390 px the open bottom sheet's scrim covers the header, so "Demo" needs the sheet closed first (×/Esc).
+
+### D-029 · Trace view polish (requested by Abdullah; UI only)
+- The Trace view lists only the rules that mattered by default: every rule that fired or failed, plus passed checks that
+  ruled a path out (the reply's claim D0, the rail check D1, "docs disagree" D4, D5/D6 when D7 fired, the no-downgrade
+  check D11a after D9 and the proposal check D11b after D10, and the source-standings row when a doc was ruled out). The
+  rest sit under "Show all N steps". Skipped rules, which only repeat another rule's result ("V settled by explicit
+  supersession", "D9 fired"), are never listed; the complete engine trace stays in Raw JSON.
+- Each row is one or two plain sentences generated from the real result (`traceRows` in `lib/client/outcome.ts`); the
+  engine's verbatim detail (quotes, D5's four conditions) is behind a per-row "Details" toggle.
+- The ID column is 64 px and non-wrapping, and the roll-up row is labelled "Result" (engine rule "Overall" in its title).
+- No engine, API or test changes.

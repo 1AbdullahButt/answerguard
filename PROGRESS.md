@@ -444,3 +444,17 @@ D:/Project/slite e40fd2b [main]
 ```
 
 GATE: PASSED
+
+### Phase 5 addendum: trace polish (D-029)
+UI only: the Trace view shows the rules that mattered, plain one- or two-sentence rows with a Details toggle, and a non-wrapping "Result" label.
+```
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+  ok 1 [chromium] › e2e\demo.spec.ts:15:5 › wrong draft → Send → held → Use this reply → Send → sent → Demo menu shows 1 stopped (679ms)
+  1 passed (20.8s)
+trace         1440px  axe: none
+trace         1024px  axe: none
+trace          390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none. States that failed to reach: none.
+TP_EXIT=0
+```

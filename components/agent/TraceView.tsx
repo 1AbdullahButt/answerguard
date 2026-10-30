@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
 import type { CheckResult } from "@/lib/engine/types";
 import { mostSevereClaim } from "@/lib/client/format";
-import { extractedCount, modelLine, OUTCOME, traceRows } from "@/lib/client/outcome";
+import { extractedCount, modelLine, OUTCOME, traceRows, type TraceRow } from "@/lib/client/outcome";
 import { cx, Tag, ui } from "@/components/ui/atoms";
 import s from "./agent.module.css";
 
@@ -38,15 +38,50 @@ function tint(json: string): ReactNode[] {
   return out;
 }
 
+/** One trace row: plain summary, with the engine's verbatim detail (quotes, D5's conditions) behind "Details". */
+function TraceItem({ row }: { row: TraceRow & { id: string } }) {
+  const [open, setOpen] = useState(false);
+  const detailId = `trace-detail-${row.id}`;
+  const hasMore = row.detail.trim() !== row.summary.trim();
+  return (
+    <li className={cx(row.outcome === "fired" && s.fired, row.outcome === "fail" && s.failed)}>
+      <span className={s.rid} title={row.rule === row.label ? undefined : `Engine rule: ${row.rule}`}>
+        {row.label}
+      </span>
+      <span className={s.rdetail}>
+        <span>
+          {row.outcome === "fired" ? <strong>Fired. </strong> : row.outcome === "fail" ? <strong>Failed. </strong> : null}
+          {row.summary}
+        </span>
+        {hasMore ? (
+          <button type="button" className={s.detailsBtn} aria-expanded={open} aria-controls={detailId} onClick={() => setOpen((v) => !v)}>
+            {open ? "Hide details" : "Details"}
+          </button>
+        ) : null}
+        {hasMore && open ? (
+          <span id={detailId} className={s.rfull}>
+            {row.detail}
+          </span>
+        ) : null}
+      </span>
+    </li>
+  );
+}
+
 /**
- * The full rule trace (design v2, for engineers): every entry from the real CheckResult, in engine order, with the
- * fired rules highlighted. Engine names and reason codes are allowed here and in Raw JSON only.
+ * The rule trace (design v2, for engineers), from the real CheckResult in engine order. By default only the rules that
+ * mattered (fired, failed, or ruled a path out); the rest sit under "Show all N steps". Skipped rules, which only repeat
+ * another rule's result, are never listed; the complete engine trace is in Raw JSON. Engine names and reason codes are
+ * allowed here and in Raw JSON only.
  */
 export function TraceView({ result, onBack, onOpenDoc }: { result: CheckResult; onBack: () => void; onOpenDoc: (id: string) => void }) {
   const [raw, setRaw] = useState(false);
+  const [all, setAll] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
   useEffect(() => backRef.current?.focus(), []);
-  const rows = traceRows(result);
+  const rows = traceRows(result).map((r, i) => ({ ...r, id: `${r.rule}-${i}` }));
+  const shown = all ? rows : rows.filter((r) => r.key);
+  const hidden = rows.length - rows.filter((r) => r.key).length;
   const tone = OUTCOME[result.decision].tone;
   const gov = mostSevereClaim(result)?.governing?.sourceId;
   const firstDoc = gov ?? result.claims[0]?.evidence[0]?.source.id;
@@ -68,17 +103,16 @@ export function TraceView({ result, onBack, onOpenDoc }: { result: CheckResult; 
         <Tag tone="neutral">{result.reasonCode}</Tag>
       </div>
 
-      <ol className={s.traceList} aria-label="Rules in the order they ran">
-        {rows.map((r, i) => (
-          <li key={`${r.rule}-${i}`} className={cx(r.outcome === "fired" && s.fired, r.outcome === "skipped" && s.skipped, r.outcome === "fail" && s.failed)}>
-            <span className={s.rid}>{r.rule}</span>
-            <span className={s.rdetail}>
-              {r.outcome === "fired" ? <strong>Fired. </strong> : r.outcome === "skipped" ? <span className="sr-only">Skipped. </span> : r.outcome === "fail" ? <strong>Failed. </strong> : null}
-              {r.detail}
-            </span>
-          </li>
+      <ol className={s.traceList} aria-label={all ? "All rule steps in the order they ran" : "Rules that mattered, in the order they ran"}>
+        {shown.map((r) => (
+          <TraceItem key={r.id} row={r} />
         ))}
       </ol>
+      {hidden > 0 || all ? (
+        <button type="button" className={s.showAll} aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show only the rules that mattered" : `Show all ${rows.length} steps`}
+        </button>
+      ) : null}
 
       {raw ? (
         <pre className={s.json} tabIndex={0} aria-label="Raw CheckResult JSON">

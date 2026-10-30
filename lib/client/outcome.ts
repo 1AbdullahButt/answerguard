@@ -324,22 +324,191 @@ function soSentence(result: CheckResult, claim: ClaimResult | null, govEv: Evide
 // ---- Trace ---------------------------------------------------------------------------------------------
 
 export interface TraceRow {
+  /** Engine rule id ("D5", "Overall"). */
   rule: string;
+  /** What the ID column shows ("Result" for the roll-up, so it never wraps). */
+  label: string;
   outcome: "pass" | "fail" | "fired" | "skipped";
+  /** One or two plain sentences, generated from the real result. */
+  summary: string;
+  /** The engine's verbatim detail, shown behind the row's "Details" toggle. */
   detail: string;
+  /** True when the rule mattered: it fired, failed, or ruled a path out. Others sit under "Show all N steps". */
+  key: boolean;
 }
 
-/** Draft-level rules, then source standings (S), then each claim's D-rules, then the roll-up. All from the result. */
+/**
+ * Short doc name for trace sentences: "Outgoing Transfers: Reversal SOP" → "Reversal SOP", "Support Macros: Transfers" →
+ * "Support Macros" (for macros the collection name is the meaningful half), any Slack source → "Slack note".
+ */
+function shortTitle(ev: Evidence): string {
+  const { title, kind } = ev.source;
+  if (kind === "slack") return "Slack note";
+  const i = title.indexOf(": ");
+  if (i < 0) return title;
+  return kind === "macro" ? title.slice(0, i) : title.slice(i + 2);
+}
+
+function firstSentence(s: string): string {
+  const m = /^.*?[.!?](?=\s|$)/.exec(s.trim());
+  return (m ? m[0] : s).trim();
+}
+
+const STANDING_PHRASE: Partial<Record<Evidence["standing"], (ev: Evidence) => string>> = {
+  EXCLUDED: (ev) => (ev.source.signals.flaggedOutdated ? "is excluded (flagged outdated)" : "is excluded (deprecated)"),
+  PROPOSAL: () => "is only a proposal",
+  NOT_YET_EFFECTIVE: () => "isn't in force yet",
+};
+
+interface TraceCtx {
+  result: CheckResult;
+  name: (id: string) => string;
+  /** Replaces DOC-/SRC- ids in engine text with short doc titles. */
+  named: (text: string) => string;
+}
+
+function claimSummary(row: TraceEntryLike, c: ClaimResult, ctx: TraceCtx): string {
+  const g = c.governing;
+  const V = g?.valueText ?? "";
+  const govName = g ? ctx.name(g.sourceId) : "the governing doc";
+  const draft = c.draftClaim.value ? valueWords(c.draftClaim.value) : c.draftClaim.valueText;
+  const fallback = firstSentence(ctx.named(row.detail));
+  const others = (pred: (e: Evidence) => boolean) => [...new Set(c.evidence.filter(pred).map((e) => ctx.name(e.source.id)))].join(" and ");
+  switch (`${row.rule}:${row.outcome}`) {
+    case "D0:pass":
+      return `Your reply promises ${c.draftClaim.valueText}${c.draftClaim.definitive ? "" : ", hedged"}.`;
+    case "D1:pass": {
+      const rail = /for the (instant|standard) rail/.exec(row.detail)?.[1];
+      return rail ? `The rail is known (${rail}), so there's no scope gap.` : "The rail doesn't change the answer here.";
+    }
+    case "D1:fired":
+      return "The rail is unknown, and the docs give different answers for different rails.";
+    case "D2:fired":
+      return "Only proposals or upcoming changes cover this; nothing in force does.";
+    case "D3:fired":
+      return c.draftClaim.value ? "No doc in force covers this claim." : "The reply states no value a doc could support.";
+    case "D4:pass":
+      return ctx.named(row.detail).replace(/^Candidates disagree:/, "The docs disagree:");
+    case "D4:fired":
+      return `All applicable docs agree: ${V}.`;
+    case "D5:fired": {
+      const targets = others((e) => e.standing === "CANDIDATE" && e.applicability !== "NOT_APPLICABLE" && e.source.id !== g?.sourceId && e.relation !== "n/a");
+      return `${govName} explicitly replaces ${targets || "the other doc"} for this rail, so its ${V} governs.`;
+    }
+    case "D5:pass":
+      return "No doc says it replaces another.";
+    case "D6:fired":
+      return `${govName} is the only doc specific to this rail, so its ${V} governs.`;
+    case "D6:pass":
+      return "No doc is specific to this rail.";
+    case "D7:fired":
+      return "The docs still disagree and no rule picks a winner. Newer or verified doesn't win on its own.";
+    case "D8:fired":
+      return `Your reply and the docs use different units (${draft} vs ${V}).`;
+    case "D9:fired":
+      return c.draftClaim.definitive
+        ? `Your reply's ${draft} is outside the governing ${V}: Hold.`
+        : `Your reply's ${draft} is outside the governing ${V}, but it's hedged: Double-check.`;
+    case "D9:pass":
+      return `Your reply's ${draft} is within the governing ${V}.`;
+    case "D10:fired":
+      return `Your reply's ${draft} matches ${govName} (${V}).`;
+    case "D11a:fired": {
+      const gov = c.evidence.find((e) => e.source.id === g?.sourceId);
+      const why = gov?.weakeners.map((w) => WEAKENER_WORDS[w].toLowerCase()).join(", ");
+      return `${govName} has a verification problem${why ? ` (${why})` : ""}, so the result drops to Double-check.`;
+    }
+    case "D11a:pass":
+      return "The governing doc has no verification problems, so there's no downgrade.";
+    case "D11b:fired": {
+      const signals = others((e) => (e.standing === "PROPOSAL" || e.standing === "NOT_YET_EFFECTIVE") && e.applicability === "APPLIES");
+      return `A change is signalled for this rail${signals ? ` (${signals})` : ""}, so the result drops to Double-check.`;
+    }
+    case "D11b:pass":
+      return "No proposals or upcoming changes apply.";
+    default:
+      return fallback;
+  }
+}
+
+type TraceEntryLike = { rule: string; outcome: TraceRow["outcome"]; detail: string };
+
+function topSummary(row: TraceEntryLike, ctx: TraceCtx): string {
+  const { result } = ctx;
+  const unread = result.caps.map((cap) => ctx.name(cap.sourceId)).join(" and ");
+  switch (`${row.rule}:${row.outcome}`) {
+    case "D0a:fired":
+      return "The reply couldn't be read, so nothing was sent.";
+    case "D0a:pass":
+      return `The reply was read: ${result.claims.length} claim${result.claims.length === 1 ? "" : "s"} found.`;
+    case "D0b:fired": {
+      const said = [...new Set(result.patternMatches.map((m) => `“${m.text}”`))].join(", ");
+      return `No timeline was extracted, but the reply mentions ${said || "a timing"}. Check it by hand.`;
+    }
+    case "D0c:fired":
+      return "The reply makes a claim outside the topics checked here. Check it by hand.";
+    case "D0d:fired":
+      return "No policy claims in this reply.";
+    case "Cap:fired":
+      return `${unread} couldn't be read, so Good to send is capped at Double-check.`;
+    case "Cap:pass":
+      return `${unread} couldn't be read; the result is already ${result.decision}.`;
+    case "Overall:fired":
+      return `Final result: ${result.decision} (${result.reasonCode})${result.claims.length > 1 ? `, the most severe of ${result.claims.length} claims` : ""}.`;
+    default:
+      return firstSentence(ctx.named(row.detail));
+  }
+}
+
+/**
+ * The trace rows for the Trace view (design v2): draft-level rules, source standings (S), each claim's D-rules and the
+ * roll-up, all from the real result. Skipped rules only repeat another rule's result ("V settled by explicit
+ * supersession", "D9 fired"), so they're left out; the full engine trace stays in Raw JSON.
+ */
 export function traceRows(result: CheckResult): TraceRow[] {
+  const titles = new Map<string, string>();
+  for (const c of result.claims) for (const e of c.evidence) titles.set(e.source.id, shortTitle(e));
+  const name = (id: string) => titles.get(id) ?? id;
+  const ctx: TraceCtx = { result, name, named: (text) => text.replace(/\b(?:DOC|SRC)-\d+\b/g, (id) => name(id)) };
   const rows: TraceRow[] = [];
-  const top = result.trace.filter((t) => t.rule !== "Overall");
-  const overall = result.trace.filter((t) => t.rule === "Overall");
-  rows.push(...top);
-  const standings = new Map<string, string>();
-  for (const c of result.claims) for (const e of c.evidence) if (!standings.has(e.source.id)) standings.set(e.source.id, `${e.source.id}: ${e.standingRule}`);
-  if (standings.size) rows.push({ rule: "S", outcome: "pass", detail: Array.from(standings.values()).join(" ") });
-  result.claims.forEach((c) => rows.push(...c.trace));
-  rows.push(...overall);
+  const push = (r: TraceEntryLike, summary: string, key: boolean) => {
+    if (r.outcome === "skipped") return;
+    rows.push({ rule: r.rule, label: r.rule === "Overall" ? "Result" : r.rule, outcome: r.outcome, summary, detail: r.detail, key });
+  };
+  const mattered = (r: TraceEntryLike) => r.outcome === "fired" || r.outcome === "fail";
+
+  for (const t of result.trace.filter((x) => x.rule !== "Overall")) push(t, topSummary(t, ctx), mattered(t) || t.rule === "Cap");
+
+  // Source standings: one row; it matters when a doc was ruled out (excluded, proposal, not in force yet).
+  const seen = new Map<string, Evidence>();
+  for (const c of result.claims) for (const e of c.evidence) if (!seen.has(e.source.id)) seen.set(e.source.id, e);
+  if (seen.size) {
+    const ruledOut = [...seen.values()].filter((e) => STANDING_PHRASE[e.standing]);
+    const summary = ruledOut.length
+      ? `${ruledOut.map((e) => `${name(e.source.id)} ${STANDING_PHRASE[e.standing]!(e)}`).join("; ")}.`
+      : "Every doc counts: all are in force and none is excluded.";
+    push({ rule: "S", outcome: "pass", detail: [...seen.values()].map((e) => `${e.source.id}: ${e.standingRule}`).join(" ") }, summary, ruledOut.length > 0);
+  }
+
+  for (const c of result.claims) {
+    const fired = (rule: string) => c.trace.some((t) => t.rule === rule && t.outcome === "fired");
+    for (const t of c.trace) {
+      let key = mattered(t);
+      if (!key && t.outcome === "pass") {
+        // Passed checks that ruled a path out.
+        key =
+          t.rule === "D0" ||
+          t.rule === "D1" ||
+          t.rule === "D4" ||
+          ((t.rule === "D5" || t.rule === "D6") && fired("D7")) ||
+          (t.rule === "D11a" && fired("D9")) ||
+          (t.rule === "D11b" && fired("D10"));
+      }
+      push(t, claimSummary(t, c, ctx), key);
+    }
+  }
+
+  for (const t of result.trace.filter((x) => x.rule === "Overall")) push(t, topSummary(t, ctx), true);
   return rows;
 }
 
