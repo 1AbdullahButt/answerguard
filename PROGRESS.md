@@ -373,3 +373,74 @@ D:/Project/slite 3a3ff86 [main]
 ```
 
 GATE: PASSED
+
+## Phase 5
+**Design v2 restyle** (brief `design/v2/REDESIGN_PROMPT.md`; artboards `design/v2/*.dc.html`; D-026, D-027, D-028).
+- Send runs the check through `/api/send`: held → "Held by Slite Agent" + disabled "Send (held)" + intercept; Double-check → acknowledgement + Send anyway; AI unavailable → "Not sent, nothing was lost".
+- Layout: three cards. The Slite Agent card has 2 tabs (Check, Docs); Why and Trace are built from the real CheckResult.
+- Plain outcome names. Demo menu holds personas, Impact, AI mode, tour, reset. Figtree tokens; responsive at 1100/700; tour updated.
+- Engine, AI pipeline, API and engine tests unchanged.
+- **One-time unlock of the demo test (approved):** the test was rewritten to the v2 contract. QA compared it with the old test (every guarantee kept, two strengthened) and approved it, then the folder was re-locked:
+```
+# Locked paths (in addition to tests/, SPEC.md, IMPLEMENTATION_BRIEF.md, data/seed/). One per line.
+e2e/
+```
+- QA verdict: APPROVED. It checked the screenshots side by side with all 9 artboards at 1440 and 390, accepted the 5 D-027 deviations, and confirmed dynamic proof in v2 (B1 → Hold at 2 days, B2 → Double-check, B3 → Ask first, B7 → Double-check), outcome contrast 5.67–8.35:1, and DOC-105 hidden for Support agent. Minors were fixed or recorded in D-028.
+
+**Final local run** (`pnpm build && record-demo && pnpm typecheck && pnpm test && pnpm exec playwright test && ui-audit --serve`):
+```
+wrote docs/demo.gif and docs/demo.webm
+ Test Files  12 passed (12)
+      Tests  105 passed (105)
+  ok 1 [chromium] › e2e\demo.spec.ts:15:5 › wrong draft → Send → held → Use this reply → Send → sent → Demo menu shows 1 stopped (683ms)
+  1 passed (22.2s)
+Serious/critical axe violations: 0. Horizontal page scroll: none. States that failed to reach: none.
+P5_EXIT=0
+```
+
+**Deployed** to https://answerguard.vercel.app (CLI, production). Live smoke test:
+```
+GET / → 200 (1.09s) · GET /how-it-works → 200 · GET /demo.gif → 200 (4,672,703 B)
+support_agent seed: DOC-105 mentions 0
+POST /api/send wrong 4-day draft (TCK-9001) → HTTP 409 blocked HOLD (saved)
+Docs tab live: PASS docs@1024, PASS docs@390 (edit applied, no horizontal scroll)
+```
+**Live UI audit, desktop + phone** (`ui-audit.ts https://answerguard.vercel.app`; the AI-unavailable state is local-only because live AI answers):
+```
+empty         1440px  axe: none
+held          1440px  axe: none
+why           1440px  axe: none
+trace         1440px  axe: none
+docs          1440px  axe: none
+double-check  1440px  axe: none
+ask-first     1440px  axe: none
+sent          1440px  axe: none
+demo-menu     1440px  axe: none
+empty         1024px  axe: none
+held          1024px  axe: none
+why           1024px  axe: none
+trace         1024px  axe: none
+docs          1024px  axe: none
+double-check  1024px  axe: none
+ask-first     1024px  axe: none
+sent          1024px  axe: none
+demo-menu     1024px  axe: none
+empty          390px  axe: none
+held           390px  axe: none
+why            390px  axe: none
+trace          390px  axe: none
+docs           390px  axe: none
+double-check   390px  axe: none
+ask-first      390px  axe: none
+sent           390px  axe: none
+demo-menu      390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none. States that failed to reach: none.
+LIVE_EXIT=0
+```
+
+**Worktrees:**
+```
+D:/Project/slite e40fd2b [main]
+```
+
+GATE: PASSED

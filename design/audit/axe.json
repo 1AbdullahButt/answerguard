@@ -35,11 +35,6 @@
     "violations": []
   },
   {
-    "state": "not-sent",
-    "width": 1440,
-    "violations": []
-  },
-  {
     "state": "sent",
     "width": 1440,
     "violations": []
@@ -85,11 +80,6 @@
     "violations": []
   },
   {
-    "state": "not-sent",
-    "width": 1024,
-    "violations": []
-  },
-  {
     "state": "sent",
     "width": 1024,
     "violations": []
@@ -131,11 +121,6 @@
   },
   {
     "state": "ask-first",
-    "width": 390,
-    "violations": []
-  },
-  {
-    "state": "not-sent",
     "width": 390,
     "violations": []
   },

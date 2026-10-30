@@ -53,10 +53,13 @@ async function openConversation(page: Page, name: RegExp) {
 /** Under 1100 px the Slite Agent card is a slide-over / bottom sheet; open it if it's closed. */
 async function openAgent(page: Page) {
   const tab = page.getByRole("tab", { name: "Check", exact: true });
-  if (await tab.isVisible().catch(() => false)) return;
   const toggle = page.getByRole("button", { name: /Slite Agent$/ }).first();
+  // Wait for whichever renders first (the card itself on desktop, or the slide-over/sheet toggle); on a deployed site
+  // hydration can take longer than locally.
+  await Promise.race([tab.waitFor({ timeout: 15_000 }), toggle.waitFor({ timeout: 15_000 })]).catch(() => undefined);
+  if (await tab.isVisible().catch(() => false)) return;
   if (await toggle.isVisible().catch(() => false)) await toggle.click();
-  await tab.waitFor({ timeout: 5_000 });
+  await tab.waitFor({ timeout: 15_000 });
 }
 
 /** Send runs the check (POST /api/send). */
@@ -71,7 +74,9 @@ async function held(page: Page) {
   await page.getByRole("region", { name: "Decision" }).getByText("Hold").first().waitFor({ timeout: 20_000 });
 }
 
-const states: Array<{ name: string; run: (page: Page) => Promise<void> }> = [
+const isLocal = /\/\/(127\.0\.0\.1|localhost)[:/]/.test(base);
+
+const states: Array<{ name: string; localOnly?: boolean; run: (page: Page) => Promise<void> }> = [
   { name: "empty", run: async () => {} },
   { name: "held", run: held },
   {
@@ -123,6 +128,9 @@ const states: Array<{ name: string; run: (page: Page) => Promise<void> }> = [
   {
     // A draft with no saved AI response in AI_MODE=saved → 503 → "Not sent" + "Try again".
     name: "not-sent",
+    // Needs a draft with no saved response and no live AI (AI_MODE=saved). On a deployed site with live AI configured the
+    // draft is simply checked, so this state is only audited locally.
+    localOnly: true,
     run: async (page) => {
       await sendDraft(page, /Hina S\./, "Your refund should arrive in 3 working days.");
       await page.getByRole("button", { name: "Try again", exact: true }).waitFor({ timeout: 20_000 });
@@ -159,6 +167,7 @@ async function main() {
   const failed: string[] = [];
   for (const width of widths) {
     for (const state of states) {
+      if (state.localOnly && !isLocal) continue;
       const context = await browser.newContext({ viewport: { width, height: width < 700 ? 844 : 900 } });
       const page = await context.newPage();
       await page.goto(base);
