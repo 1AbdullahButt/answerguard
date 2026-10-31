@@ -4,7 +4,7 @@
 // ticket, fill the canonical draft, switch views and re-check, but nothing is sent or edited without a button press.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, CircleCheck, X } from "lucide-react";
-import type { AnswerGuard } from "@/lib/client/useAnswerGuard";
+import type { SureSend } from "@/lib/client/useSureSend";
 import { cx } from "@/components/ui/atoms";
 import s from "./tour.module.css";
 
@@ -17,7 +17,7 @@ export interface TourState {
 }
 
 interface Ctx {
-  ag: AnswerGuard;
+  ag: SureSend;
   showAgent: () => void;
   hideAgent: () => void;
 }
@@ -25,11 +25,11 @@ interface Ctx {
 interface Step {
   title: string;
   body: ReactNode;
-  target: (ag: AnswerGuard, applied: boolean) => string[];
+  target: (ag: SureSend, applied: boolean) => string[];
   enter?: (c: Ctx) => void;
 }
 
-const held = (ag: AnswerGuard, id: string) => ag.ticket?.id === id && ag.sendState.kind === "blocked";
+const held = (ag: SureSend, id: string) => ag.ticket?.id === id && ag.sendState.kind === "blocked";
 
 const STEPS: Step[] = [
   {
@@ -157,7 +157,7 @@ export function GuidedTour({
   onClose,
 }: {
   state: TourState;
-  ag: AnswerGuard;
+  ag: SureSend;
   overlay: boolean;
   onStep: (step: number) => void;
   onStart: () => void;

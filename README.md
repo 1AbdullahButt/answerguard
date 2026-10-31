@@ -1,20 +1,22 @@
-# AnswerGuard
+# SureSend
+
+> SureSend was called AnswerGuard in SPEC v2.2 and the brief.
 
 **An independent product concept for Slite Agent. Not affiliated with Slite. Synthetic data only.**
 
-> Slite keeps the docs true. AnswerGuard checks the reply before it reaches the customer.
+> Slite keeps the docs true. SureSend checks the reply before it reaches the customer.
 
-A support agent writes a reply. Before it's sent, AnswerGuard:
+A support agent writes a reply. Before it's sent, SureSend:
 
 1. pulls the factual claims out of the draft (live AI),
 2. finds the matching claims in the team's messy docs and Slack (live AI, every quote validated as verbatim),
 3. weighs those sources with transparent, deterministic rules, and
 4. returns **Allow, Caution, Hold or Escalate**, plus a rechecked safe reply and the full reasoning.
 
-**Live demo:** https://answerguard.vercel.app · **Source:** https://github.com/1AbdullahButt/answerguard · works with no setup; the canonical path replays saved AI responses if live AI is
+**Live demo:** https://suresend-demo.vercel.app (the old https://answerguard.vercel.app redirects here) · **Source:** https://github.com/1AbdullahButt/suresend · works with no setup; the canonical path replays saved AI responses if live AI is
 unavailable or rate-limited. **Walkthrough video:** _link added after recording._
 
-![AnswerGuard demo: a 4-day draft is held because the instant-rail exception says 1 business day; the safe reply is used and sent; an unknown-rail ticket escalates with a holding reply.](docs/demo.gif)
+![SureSend demo: a 4-day draft is held because the instant-rail exception says 1 business day; the safe reply is used and sent; an unknown-rail ticket escalates with a holding reply.](docs/demo.gif)
 
 ## The problem
 

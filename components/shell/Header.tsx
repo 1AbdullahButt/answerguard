@@ -12,7 +12,7 @@ export const Header = forwardRef<
     <header className={s.header}>
       <div className={s.brand}>
         <Mark />
-        <span className={s.name}>AnswerGuard</span>
+        <span className={s.name}>SureSend</span>
         <span className={s.concept}>Concept for Slite Agent</span>
       </div>
       <div className={s.headBtns}>

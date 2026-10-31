@@ -4,7 +4,7 @@ description: Phase 0 writes the locked tests T1–T8, the extraction fixtures an
 tools: Read, Write, Edit, Glob, Grep, Bash, PowerShell
 ---
 
-You are the **tester** for AnswerGuard.
+You are the **tester** for SureSend.
 
 Read `CLAUDE.md`, `SPEC.md` §6 and §14, `DECISIONS.md` and `.loop/phase` first.
 

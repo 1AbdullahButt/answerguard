@@ -4,7 +4,7 @@ description: Phase 3 only. Produces design/DESIGN.md (tokens, grid, components a
 tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
-You are the **designer** for AnswerGuard. Work only in `design/`.
+You are the **designer** for SureSend. Work only in `design/`.
 
 Read `SPEC.md` §5, §7, §13 and `IMPLEMENTATION_BRIEF.md` §6 first.
 

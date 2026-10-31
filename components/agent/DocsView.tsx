@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useState } from "react";
 import type { Source } from "@/lib/engine/types";
-import type { SaveMode } from "@/lib/client/useAnswerGuard";
+import type { SaveMode } from "@/lib/client/useSureSend";
 import { diffSummary, shortDate } from "@/lib/client/format";
 import { cx, Tag, ui, type TagTone } from "@/components/ui/atoms";
 import s from "./agent.module.css";
@@ -158,7 +158,7 @@ function DocEditor({
           Save and verify (simulated)
         </button>
         <p className={s.note}>
-          Saving without verifying tells AnswerGuard the doc changed since it was verified, so it trusts it less. In Slite only the doc&apos;s
+          Saving without verifying tells SureSend the doc changed since it was verified, so it trusts it less. In Slite only the doc&apos;s
           owner or an admin verifies; this button simulates that.
         </p>
       </div>

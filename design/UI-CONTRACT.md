@@ -15,7 +15,7 @@ which needs a human. Text matches are case-sensitive substrings unless marked "e
 | CAUTION acknowledgement | `checkbox` | "I've checked this and want to send it" |
 | Blocked-send message | `alert` | text contains "Send blocked" |
 | Sent confirmation | `status` | text contains "Sent" |
-| Side panel | `complementary` | "Slite Agent · AnswerGuard" |
+| Side panel | `complementary` | "Slite Agent · SureSend" |
 | Panel tabs | `tab` | "Check", "Reasoning", "Sources", "Impact" (exact) |
 | Decision banner | `region` | "Decision"; its text contains the label "Allow", "Caution", "Hold", "Escalate" or "AI unavailable" |
 | Safe reply card | `region` | "Safe reply" |

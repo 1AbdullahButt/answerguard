@@ -1,4 +1,4 @@
-# AnswerGuard · Progress log
+# SureSend · Progress log
 
 Live log of the gated build. Each phase records what was built, the real test output, QA's verdict and the gate result.
 Hand-traced reasoning is never evidence.
@@ -305,7 +305,7 @@ Serious/critical axe violations: 0. Horizontal page scroll: none.
 Status: waiting for deploy setup (`.loop/await-human.md`).
 
 **Deploy (D-025):**
-- Vercel project `answerguard` under the account's default team, deployed with the CLI.
+- Vercel project `answerguard` (renamed `suresend` in Phase 6) under the account's default team, deployed with the CLI.
 - Live at **https://answerguard.vercel.app**.
 - 7 Production env vars added through stdin; no values printed.
 - Upstash skipped, since it needs a browser terms click; no money is at risk, only quota.
@@ -458,3 +458,134 @@ trace          390px  axe: none
 Serious/critical axe violations: 0. Horizontal page scroll: none. States that failed to reach: none.
 TP_EXIT=0
 ```
+
+## Phase 6
+Rename AnswerGuard → **SureSend** (D-031). Production URL **https://suresend-demo.vercel.app**, the first fallback, because
+suresend.vercel.app stayed "assigned to another project" even after the CLI alias was removed. https://answerguard.vercel.app
+now redirects there with a 308 (D-032).
+
+- **Loop:** the builder did the rename and the tester ran the checks. QA returned CHANGES_REQUIRED with one major finding:
+  the rename had rewritten the evidence URLs on Phase 4/5 prose lines of this file. The fix was to rebuild this file from
+  HEAD, renaming the product only, so every URL matches HEAD. QA's minor findings were also fixed: `docs/VIDEO_SCRIPT.md`
+  added to `.git/info/exclude`; the storage migration always drops the legacy `answerguard.*` key, with a new
+  `lib/client/storage.test.ts` covering it; the quota edge case keeps the legacy value for that read; D-032 updated.
+  QA's re-review returned **APPROVED** after re-running typecheck, 108 tests, the e2e test, the axe audit (30 runs, none)
+  and the migration in a real browser, and finding the locked paths byte-identical. After that approval, only the
+  production URL changed (`app/layout.tsx` metadata, README, PLAN §9, D-032, video script); the checks below were rerun
+  after that change.
+- **Test-string exception:** not used. No literal in `tests/` or `e2e/` asserts the product name, so there is no diff to
+  paste; the locked paths are unchanged (block below).
+- **GIF:** re-recorded with the SureSend header; `public/demo.gif` is byte-identical to `docs/demo.gif` (4,977,666 bytes).
+
+**Typecheck and tests (after the URL change):**
+```
+
+> suresend@0.1.0 typecheck D:\Project\slite
+> tsc --noEmit
+TYPECHECK_EXIT=0
+ RUN  v5.0.5 D:/Project/slite
+ Test Files  13 passed (13)
+      Tests  108 passed (108)
+TEST_EXIT=0
+```
+
+**E2E (saved mode, local production build):**
+```
+Running 1 test using 1 worker
+  ok 1 [chromium] › e2e\demo.spec.ts:15:5 › wrong draft → Send → held → Use this reply → Send → sent → Demo menu shows 1 stopped (6.7s)
+  1 passed (2.7m)
+E2E_EXIT=0
+```
+
+**Locked paths and worktrees:**
+```
+$ git diff --stat HEAD -- tests e2e data/seed SPEC.md IMPLEMENTATION_BRIEF.md | wc -l
+0
+$ git status --short -- tests e2e data/seed SPEC.md IMPLEMENTATION_BRIEF.md | wc -l
+0
+$ git worktree list
+D:/Project/slite 5f46364 [main]
+```
+
+**Vercel project `suresend` domains:**
+```
+suresend-demo.vercel.app verified=true redirect=- redirectStatusCode=-
+answerguard.vercel.app verified=true redirect=suresend-demo.vercel.app redirectStatusCode=308
+```
+
+**Live HTTP after `vercel deploy --prod`:**
+```
+200 https://suresend-demo.vercel.app 
+200 https://suresend-demo.vercel.app/how-it-works 
+200 https://suresend-demo.vercel.app/demo.gif 
+200 https://suresend-demo.vercel.app/icon.svg 
+308 https://answerguard.vercel.app https://suresend-demo.vercel.app/
+308 https://answerguard.vercel.app/how-it-works https://suresend-demo.vercel.app/how-it-works
+```
+
+**Live browser check (both URLs, desktop 1440 and phone 390):**
+```
+PASS https://suresend-demo.vercel.app @ desktop 1440
+  final: 200 https://suresend-demo.vercel.app/
+  title: SureSend · a concept for Slite Agent
+  header: SureSend Concept for Slite Agent Demo menu Guided tour
+  og:url=https://suresend-demo.vercel.app og:image=https://suresend-demo.vercel.app/demo.gif
+  "answerguard" in HTML: 0, page errors: 0
+PASS https://suresend-demo.vercel.app @ phone 390
+  final: 200 https://suresend-demo.vercel.app/
+  title: SureSend · a concept for Slite Agent
+  header: SureSend Demo menu
+  og:url=https://suresend-demo.vercel.app og:image=https://suresend-demo.vercel.app/demo.gif
+  "answerguard" in HTML: 0, page errors: 0
+PASS https://answerguard.vercel.app @ desktop 1440
+  redirects: 308 https://answerguard.vercel.app/
+  final: 200 https://suresend-demo.vercel.app/
+  title: SureSend · a concept for Slite Agent
+  header: SureSend Concept for Slite Agent Demo menu Guided tour
+  og:url=https://suresend-demo.vercel.app og:image=https://suresend-demo.vercel.app/demo.gif
+  "answerguard" in HTML: 0, page errors: 0
+PASS https://answerguard.vercel.app @ phone 390
+  redirects: 308 https://answerguard.vercel.app/
+  final: 200 https://suresend-demo.vercel.app/
+  title: SureSend · a concept for Slite Agent
+  header: SureSend Demo menu
+  og:url=https://suresend-demo.vercel.app og:image=https://suresend-demo.vercel.app/demo.gif
+  "answerguard" in HTML: 0, page errors: 0
+ALL PASS
+LIVE_EXIT=0
+```
+
+**Live axe audit against https://suresend-demo.vercel.app (1440/1024/390; not-sent is local-only):**
+```
+empty         1440px  axe: none
+held          1440px  axe: none
+why           1440px  axe: none
+trace         1440px  axe: none
+docs          1440px  axe: none
+double-check  1440px  axe: none
+ask-first     1440px  axe: none
+sent          1440px  axe: none
+demo-menu     1440px  axe: none
+empty         1024px  axe: none
+held          1024px  axe: none
+why           1024px  axe: none
+trace         1024px  axe: none
+docs          1024px  axe: none
+double-check  1024px  axe: none
+ask-first     1024px  axe: none
+sent          1024px  axe: none
+demo-menu     1024px  axe: none
+empty          390px  axe: none
+held           390px  axe: none
+why            390px  axe: none
+trace          390px  axe: none
+docs           390px  axe: none
+double-check   390px  axe: none
+ask-first      390px  axe: none
+sent           390px  axe: none
+demo-menu      390px  axe: none
+Serious/critical axe violations: 0. Horizontal page scroll: none. States that failed to reach: none.
+AUDIT_EXIT=0
+```
+
+GATE: PASSED

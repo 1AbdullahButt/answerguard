@@ -66,7 +66,7 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function useAnswerGuard() {
+export function useSureSend() {
   const [role, setRole] = useState<Role>("support_agent");
   const [seed, setSeed] = useState<SeedResponse | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
@@ -584,4 +584,4 @@ export function useAnswerGuard() {
   };
 }
 
-export type AnswerGuard = ReturnType<typeof useAnswerGuard>;
+export type SureSend = ReturnType<typeof useSureSend>;

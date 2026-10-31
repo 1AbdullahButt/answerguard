@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import s from "./page.module.css";
 
-export const metadata: Metadata = { title: "How it works · AnswerGuard" };
+export const metadata: Metadata = { title: "How it works · SureSend" };
 export const dynamic = "force-static";
 
 function slug(text: string): string {

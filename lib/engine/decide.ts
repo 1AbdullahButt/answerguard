@@ -80,7 +80,7 @@ export function decide(extractions: Extractions, sources: Source[], ticket: Deci
     return {
       decision: "AI_UNAVAILABLE",
       reasonCode: "EXTRACTION_FAILED",
-      headline: "AI unavailable: AnswerGuard couldn't read this draft. Retry, or rewrite it without the policy claim.",
+      headline: "AI unavailable: SureSend couldn't read this draft. Retry, or rewrite it without the policy claim.",
       claims: [],
       caps: [],
       patternMatches,
@@ -129,7 +129,7 @@ export function decide(extractions: Extractions, sources: Source[], ticket: Deci
       trace.push({
         rule: "D0b",
         outcome: "fired",
-        detail: `No reversal-window claim was extracted, but the policy-pattern detector found ${quoted(uncovered)}. AnswerGuard couldn't confirm the timing; check it manually.`,
+        detail: `No reversal-window claim was extracted, but the policy-pattern detector found ${quoted(uncovered)}. SureSend couldn't confirm the timing; check it manually.`,
       });
     } else if (outside.length > 0) {
       decision = "CAUTION";
@@ -465,15 +465,15 @@ function headlineFor(
     case "UNSUPPORTED":
       return "Caution: no source supports this claim. Check it manually.";
     case "EXTRACTION_GAP":
-      return "Caution: AnswerGuard couldn't confirm the timing in this draft. Check it manually.";
+      return "Caution: SureSend couldn't confirm the timing in this draft. Check it manually.";
     case "OUTSIDE_COVERAGE":
-      return "Caution: the draft makes a claim outside the topics AnswerGuard covers. Check it manually.";
+      return "Caution: the draft makes a claim outside the topics SureSend covers. Check it manually.";
     case "NO_POLICY_CLAIM":
       return "Allow: no policy claims in this reply.";
     case "SOURCE_UNREAD":
-      return `Caution: ${caps.map((c) => c.sourceId).join(", ")} couldn't be read, so AnswerGuard can't confirm this. Check it manually.`;
+      return `Caution: ${caps.map((c) => c.sourceId).join(", ")} couldn't be read, so SureSend can't confirm this. Check it manually.`;
     case "EXTRACTION_FAILED":
-      return "AI unavailable: AnswerGuard couldn't read this draft. Retry, or rewrite it without the policy claim.";
+      return "AI unavailable: SureSend couldn't read this draft. Retry, or rewrite it without the policy claim.";
     default:
       return decision;
   }

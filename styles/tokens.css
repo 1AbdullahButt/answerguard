@@ -14,7 +14,7 @@
   --muted: #5e646e;
   --on-ink-muted: #c9cbd1;
 
-  /* The AnswerGuard mark only. Never text, never a status. */
+  /* The SureSend mark only. Never text, never a status. */
   --mark: #f67748;
 
   /* Outcomes: background / text. Always shown as a word in a white pill; colour never carries the meaning alone. */

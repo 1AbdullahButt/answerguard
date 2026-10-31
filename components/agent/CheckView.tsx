@@ -2,7 +2,7 @@
 import { Check, CircleCheck, RefreshCw } from "lucide-react";
 import type { Rail } from "@/lib/engine/types";
 import type { AgentView, StaleReason, StoredResult } from "@/lib/client/types";
-import type { CheckingState, SendState } from "@/lib/client/useAnswerGuard";
+import type { CheckingState, SendState } from "@/lib/client/useSureSend";
 import { summarize } from "@/lib/client/outcome";
 import { cx, OutcomeTag, Tag, ui } from "@/components/ui/atoms";
 import { TraceView } from "./TraceView";

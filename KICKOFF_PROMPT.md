@@ -1,4 +1,4 @@
-# Claude Code kickoff prompt: AnswerGuard
+# Claude Code kickoff prompt: SureSend
 
 How to use:
 1. Open a terminal in `D:\Project\slite`.
@@ -9,7 +9,7 @@ How to use:
 
 ---
 
-You are building **AnswerGuard** in this folder (`D:\Project\slite`). This is a fresh project. Do **not** copy or reuse anything from other folders in `D:\Project`.
+You are building **SureSend** in this folder (`D:\Project\slite`). This is a fresh project. Do **not** copy or reuse anything from other folders in `D:\Project`.
 
 ## 1. Read first
 Read `SPEC.md` (v2.2) and `IMPLEMENTATION_BRIEF.md` completely before doing anything.

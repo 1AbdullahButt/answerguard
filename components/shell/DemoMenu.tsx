@@ -30,7 +30,7 @@ function Tile({ label, value }: { label: string; value: string }) {
 }
 
 /** The public source repo (README: problem, architecture, AI vs rules, tests, eval). */
-const REPO_URL = "https://github.com/1AbdullahButt/answerguard";
+const REPO_URL = "https://github.com/1AbdullahButt/suresend";
 
 /**
  * Demo menu (design v2 DemoMenu artboard): personas, the three Impact numbers, the AI mode line, the past flags to

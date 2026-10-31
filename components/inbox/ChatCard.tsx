@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { ArrowUp, Check, Lock } from "lucide-react";
 import type { Rail, Ticket } from "@/lib/engine/types";
-import type { SendState, SentMessage } from "@/lib/client/useAnswerGuard";
+import type { SendState, SentMessage } from "@/lib/client/useSureSend";
 import type { StoredResult } from "@/lib/client/types";
 import { OUTCOME } from "@/lib/client/outcome";
 import { cx, OutcomeTag, ui } from "@/components/ui/atoms";

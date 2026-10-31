@@ -1,4 +1,4 @@
-# AnswerGuard: Design spec (Phase 3)
+# SureSend: Design spec (Phase 3)
 
 Independent concept for Slite Agent · synthetic data · not affiliated with Slite.
 
@@ -110,7 +110,7 @@ I first tried `#1A7F37` for ALLOW. On its tint it scored only 4.57:1, too close 
 | Breakpoint | Layout |
 |---|---|
 | **≥ 1100 px** | Top bar 48 px. Below it, 3 columns: ticket list **272 px** · thread **flex** (min 0) · side panel **400 px**, each scrolling independently. |
-| **< 1100 px** | Ticket list and thread only. The panel becomes a **400 px slide-over** from the right over a 28% scrim. It opens on Check answer, Ctrl/⌘+Enter, or the "AnswerGuard" shield button added to the composer footer. Esc or a scrim click closes it. Focus is trapped while it is open and returns to the trigger. Below 900 px the ticket list collapses to a 64 px avatar rail. |
+| **< 1100 px** | Ticket list and thread only. The panel becomes a **400 px slide-over** from the right over a 28% scrim. It opens on Check answer, Ctrl/⌘+Enter, or the "SureSend" shield button added to the composer footer. Esc or a scrim click closes it. Focus is trapped while it is open and returns to the trigger. Below 900 px the ticket list collapses to a 64 px avatar rail. |
 | **< 700 px** | Single column. The ticket list is its own screen. The panel is a **bottom sheet** with detents at 62% (banner and safe reply) and 100%, plus a drag handle and a close button. Tabs become a horizontally scrollable row. The composer stays pinned above the keyboard. |
 
 The panel looks like a browser extension but is a normal component (`SidePanel`) placed in the grid.
@@ -120,7 +120,7 @@ The panel looks like a browser extension but is a normal component (`SidePanel`)
 Names follow IMPLEMENTATION_BRIEF §3.
 
 ### Shell
-- **TopBar**: the brand mark is an *own* shield-check glyph in an accent square (not Slite's hand). Then "AnswerGuard · independent concept for Slite Agent", RoleSwitch, Reset workspace (ghost) and AiModeBadge.
+- **TopBar**: the brand mark is an *own* shield-check glyph in an accent square (not Slite's hand). Then "SureSend · independent concept for Slite Agent", RoleSwitch, Reset workspace (ghost) and AiModeBadge.
 - **RoleSwitch**: a segmented control (Support agent | Ops lead) with an info button. Its tooltip, shown on hover or focus, reads exactly: "Simulated personas. Anyone can switch. DOC-105 is synthetic. Never use this design with real restricted data." Switching reruns the check.
 - **AiModeBadge**: a pill with a dot. The states:
   - `Live AI` (green dot)
@@ -141,11 +141,11 @@ Names follow IMPLEMENTATION_BRIEF §3.
   - *Edited after check*: the underline is removed and the panel banner shows "Draft changed since this check".
   - *Blocked (HOLD/ESCALATE, 409)*: an inline `role="alert"` bar in the status tint: "Send blocked · Hold. The server rechecked this exact draft…" with "Recorded as an intercept." and a Use safe reply / Use holding reply button. Send is disabled with a lock icon.
   - *CAUTION*: an acknowledgement checkbox row: "I've checked this against the source and want to send it anyway." Send reads "Send with caution" and stays disabled until the box is checked.
-  - *AI_UNAVAILABLE (503)*: a neutral bar: "Not sent. AnswerGuard couldn't check this draft. Retry, or remove the policy claim." It is not counted as an intercept.
+  - *AI_UNAVAILABLE (503)*: a neutral bar: "Not sent. SureSend couldn't check this draft. Retry, or remove the policy claim." It is not counted as an intercept.
   - *Sent*: a toast, "Sent to Ayesha K.", and the message appears in the thread.
 
 ### Panel
-- **SidePanel**: a 48 px header (mark + "Slite Agent · AnswerGuard", Recheck and Collapse icon buttons), tabs **Check · Reasoning · Sources · Impact** (`role=tablist`, arrow keys to move), a scrolling body on `--surface-2`, an optional sticky action bar (Sources editor), and the footer **"Independent concept for Slite Agent · synthetic data · not affiliated with Slite"**. The footer never scrolls away.
+- **SidePanel**: a 48 px header (mark + "Slite Agent · SureSend", Recheck and Collapse icon buttons), tabs **Check · Reasoning · Sources · Impact** (`role=tablist`, arrow keys to move), a scrolling body on `--surface-2`, an optional sticky action bar (Sources editor), and the footer **"Independent concept for Slite Agent · synthetic data · not affiliated with Slite"**. The footer never scrolls away.
 - **CheckTab**, top to bottom: DecisionBanner → "Your draft" card (span highlighted, Draft says vs Policy says (V)) → SafeReplyCard → Sources weighed (one row per source with its standing) → AI run line.
 - **DecisionBanner**: a white card with the status tint across its top 44 px, a 20 px icon, the label ("Hold" + "· don't send this draft"), the reason code in mono on the right, the headline (`CheckResult.headline`, verbatim), and a meta row (claims · sources · governing rule · "Why ›", which opens Reasoning). Variants: allow, caution, hold, esc, off (AI unavailable).
 - **SafeReplyCard**: the header "Safe reply" (or "Holding reply" for ESCALATE) with the **Rechecked ✓ {decision}** chip in that decision's colours. Then the text, the cited quote in yellow with the source line under it (title · ID · verified date · owner), and the actions **Use safe reply** (primary, puts the text in the composer) and Copy. The origin shows as "Template" or "AI worded". It is hidden when `suggestion` is null. For CAUTION it is replaced by a "What to verify" list.
@@ -202,7 +202,7 @@ Names follow IMPLEMENTATION_BRIEF §3.
 | Invalid AI output | Source: `INVALID_OUTPUT` / `EXTRACTION_ERROR` → `SOURCE_UNREAD` cap | Caution banner + a rejected-extraction row with "Retry reading DOC-103". If it was the draft that failed, show the AI unavailable state instead. | Caution acknowledgement |
 | Blocked send | 409 | Banner unchanged | Inline alert in the status tint, Send locked, safe/holding reply button |
 | Caution acknowledgement | `CAUTION` | Caution banner + weakener chip | Checkbox row, "Send with caution" |
-| Extraction gap | `EXTRACTION_GAP` | Caution: "AnswerGuard couldn't confirm the timing in this draft. Check it manually." Detector matches get an **amber underline** (not yellow) | Caution acknowledgement |
+| Extraction gap | `EXTRACTION_GAP` | Caution: "SureSend couldn't confirm the timing in this draft. Check it manually." Detector matches get an **amber underline** (not yellow) | Caution acknowledgement |
 | No policy claim | `NO_POLICY_CLAIM` | Allow banner: "No policy claims in this reply" | Normal |
 | Stale | Draft, rail or persona changed after a check | Banner at 55% opacity + "Draft changed since this check · Recheck" | Underline removed |
 
@@ -236,7 +236,7 @@ Names follow IMPLEMENTATION_BRIEF §3.
 - Write for an agent mid-conversation. Use the headline verbatim, and never put the AI's wording in the banner.
 - Never say or imply that a reversal has started or finished.
 - Use "Simulated" wherever the demo pretends: personas, verification, metrics.
-- No Slite logo, wordmark, hand icon, illustrations or brand colour. "Slite" appears only in "Slite Agent · AnswerGuard", "independent concept for Slite Agent" and the footer disclaimer.
+- No Slite logo, wordmark, hand icon, illustrations or brand colour. "Slite" appears only in "Slite Agent · SureSend", "independent concept for Slite Agent" and the footer disclaimer.
 
 ## 8. Open questions for review
 

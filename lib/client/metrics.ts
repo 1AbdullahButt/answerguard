@@ -3,7 +3,7 @@ import type { CheckResult } from "@/lib/engine/types";
 import { fnv1a } from "./hash";
 import { readJson, removeKey, writeJson } from "./storage";
 
-const KEY = "answerguard.metrics.v1";
+const KEY = "suresend.metrics.v1";
 
 export type Review = "correct" | "false_alarm";
 

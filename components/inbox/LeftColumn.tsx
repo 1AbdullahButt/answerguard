@@ -2,7 +2,7 @@
 import { useRef, type KeyboardEvent } from "react";
 import type { Rail, Ticket } from "@/lib/engine/types";
 import type { StoredResult } from "@/lib/client/types";
-import type { SendState } from "@/lib/client/useAnswerGuard";
+import type { SendState } from "@/lib/client/useSureSend";
 import { OUTCOME } from "@/lib/client/outcome";
 import { cx } from "@/components/ui/atoms";
 import { RailSelect } from "./RailSelect";

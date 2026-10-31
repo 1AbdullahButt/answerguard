@@ -1,5 +1,7 @@
 # Decisions
 
+> SureSend was called AnswerGuard in SPEC v2.2 and the brief.
+
 Each entry: date, decision, reason. SPEC.md is never edited; amendments to it are recorded here.
 
 ## 2026-10-30
@@ -247,7 +249,7 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
    flipped to the top when the anchor is in the lower half (the composer). Focus moves to the step title on open and on each step;
    Skip, ×, Finish and Esc close it, and focus returns to the "Guided tour" button.
 5. **Offer once.** On first visit a small offer card ("Start tour" / "Not now") anchors to the top-bar "Guided tour" button;
-   `answerguard.tour.seen.v1` is stored via the try/catch storage wrapper as soon as it is offered or started. No auto-offer when
+   `suresend.tour.seen.v1` is stored via the try/catch storage wrapper as soon as it is offered or started. No auto-offer when
    `navigator.webdriver` is true. Tour button and action labels ("Guided tour", "Start tour", "Next", "Back", "Skip tour",
    "Try to send the wrong draft", "Use the safe reply and send it", …) don't collide with any UI-contract name, and the tour renders
    no `status`, `alert`, `region` or `group` roles.
@@ -265,7 +267,7 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
 - The phone top bar keeps the product mark; the README states the spend limit is confirmed at deploy.
 
 ### D-025 · Deploy setup (approved by Abdullah)
-- **Vercel:** project `answerguard`, linked and deployed with the CLI under the account's default team (`youth-pay`, team name
+- **Vercel:** project `answerguard` (renamed `suresend` in D-031), linked and deployed with the CLI under the account's default team (`youth-pay`, team name
   "Abdullah Butt", hobby plan). Linking the private GitHub repo failed (the Vercel GitHub app has no access to it), so
   deploys go through the CLI; the repo stays private. Node pinned to 22.x (the version everything was tested on).
   `.vercelignore` keeps `.env*`, `.loop/`, `.claude/` and local screenshots out of uploads.
@@ -366,7 +368,43 @@ On Windows/Git Bash the parent PID seen by `start` is a short-lived wrapper, so 
   (Groq, Gemini/Google, Anthropic, OpenAI, GitHub, Vercel/OIDC, JWT, AWS, private keys, env-style assignments) and the exact
   values in `.env.local`. No hits; no `.env` file other than `.env.example` was ever committed; commit author emails are the
   GitHub noreply address (or a placeholder). Then `gh repo edit --visibility public`.
-- The Demo menu's "How it works · GitHub" link (the artboard's label) now opens https://github.com/1AbdullahButt/answerguard
+- The Demo menu's "How it works · GitHub" link (the artboard's label) now opens https://github.com/1AbdullahButt/suresend
   in a new tab (`rel="noopener noreferrer"`, with "(opens in a new tab)" for screen readers). This supersedes the private-repo
   notes in D-025, D-027 and D-028. The in-app `/how-it-works` page stays as an offline copy of the README but is no longer linked.
 - Vercel deploys still go through the CLI (the Vercel GitHub app isn't connected).
+
+### D-031 · Rename to SureSend (requested by Abdullah, Phase 6)
+- Product renamed AnswerGuard → **SureSend** everywhere user-facing or public: header, page title and metadata
+  ("SureSend · a concept for Slite Agent"), Open Graph/Twitter tags, a new favicon (`app/icon.svg`, the same shield mark),
+  Demo menu, guided tour, engine/UI headlines ("SureSend couldn't confirm…"), aria text, `/how-it-works`, README,
+  `package.json` name, design docs and artboards, agent definitions, and `docs/VIDEO_SCRIPT.md`. The side panel keeps "Slite Agent".
+- Code identifiers follow (`useSureSend`, type `SureSend`); localStorage keys are now `suresend.*`, with a one-time read
+  fallback that migrates `answerguard.*` so returning visitors keep their workspace, metrics and tour state. Rate-limit
+  prefixes are `suresend:*`. No AI prompt mentions the name, so saved AI responses (cache identities) are unaffected.
+- **Not renamed (intentional):** SPEC.md and IMPLEMENTATION_BRIEF.md (historical contract; README and DECISIONS carry the
+  note "SureSend was called AnswerGuard in SPEC v2.2 and the brief."); `tests/`, `e2e/` and `data/seed/` (no test asserts
+  the product name, so the approved string-only exception was not needed and the folders are byte-identical); fenced
+  evidence blocks in PROGRESS.md (real output at the time; the old URLs still resolve); historical records of the original
+  names (the `gh repo create answerguard` command in KICKOFF_PROMPT/PLAN, the Vercel project's original name, annotated).
+- **GitHub:** `gh repo rename suresend` (public; the old URL 301-redirects). Remote updated; `user.email` for this repo set
+  to the GitHub noreply address.
+- **Vercel:** project renamed `answerguard` → `suresend` (CLI). See D-032 for the production domain.
+- `docs/VIDEO_SCRIPT.md` was updated but is left untracked: it names Abdullah's employer and the repo is public; it is
+  committed only if he asks.
+
+### D-032 · Production domain: suresend-demo.vercel.app (Phase 6)
+- **Production URL: https://suresend-demo.vercel.app**, the first fallback Abdullah named. It is a project production
+  domain of `suresend` (`vercel domains add suresend-demo.vercel.app suresend`), not a manual alias, so it is public and
+  not behind Deployment Protection.
+- **Why not suresend.vercel.app:** the name was free, and `vercel alias set` reserved it for this account. But a manually
+  set alias counts as a preview URL, so visitors were sent to Vercel SSO. Registering it as a project domain failed from the
+  CLI and the API (`409 alias_conflict: already assigned to another project`), even right after removing the alias;
+  `vercel domains add --force` was refused by the session's safety classifier. The dashboard refused it too. At Abdullah's
+  request the alias was removed (`vercel alias rm suresend.vercel.app --yes`; `vercel alias ls` no longer lists it and the
+  URL returns 404), and the dashboard still said "assigned to another project". He then asked for the fallback. The name
+  was not re-reserved, so this account no longer holds suresend.vercel.app.
+- **Old URL:** `answerguard.vercel.app` stays a domain of the project and now redirects with **308** to
+  suresend-demo.vercel.app, keeping the path (`PATCH /v9/projects/suresend/domains/answerguard.vercel.app` with `redirect`
+  and `redirectStatusCode: 308`), so links already shared keep working.
+- The live URL was updated in README, `app/layout.tsx` (metadataBase and og:url, so og:image too), PLAN.md §9 and
+  `docs/VIDEO_SCRIPT.md`. The Demo menu links to GitHub, not to the live URL, so it did not change.

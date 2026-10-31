@@ -1,8 +1,8 @@
 {
-  "name": "answerguard",
+  "name": "suresend",
   "version": "0.1.0",
   "private": true,
-  "description": "AnswerGuard: an independent product concept for Slite Agent. Synthetic data only.",
+  "description": "SureSend: an independent product concept for Slite Agent. Synthetic data only.",
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": "22.x"

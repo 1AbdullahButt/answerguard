@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { X } from "lucide-react";
-import { useAnswerGuard } from "@/lib/client/useAnswerGuard";
+import { useSureSend } from "@/lib/client/useSureSend";
 import { readJson, writeJson } from "@/lib/client/storage";
 import { mostSevereClaim } from "@/lib/client/format";
 import { cx, ui } from "@/components/ui/atoms";
@@ -16,7 +16,7 @@ import { DemoMenu } from "./DemoMenu";
 import s from "./shell.module.css";
 
 export const DISCLAIMER = "Independent concept for Slite Agent · synthetic data · not affiliated with Slite";
-const TOUR_SEEN_KEY = "answerguard.tour.seen.v1";
+const TOUR_SEEN_KEY = "suresend.tour.seen.v1";
 
 function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
@@ -85,7 +85,7 @@ function ResetDialog({ edited, onCancel, onConfirm }: { edited: number; onCancel
 }
 
 export function App() {
-  const ag = useAnswerGuard();
+  const ag = useSureSend();
   const { actions } = ag;
   const overlay = useMediaQuery("(max-width: 1099px)");
   const [menuOpen, setMenuOpen] = useState(false);

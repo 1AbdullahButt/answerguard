@@ -1,4 +1,4 @@
-# Claude Code prompt: restyle AnswerGuard to design v2
+# Claude Code prompt: restyle SureSend to design v2
 
 Paste everything below the line into the slite session.
 
@@ -15,7 +15,7 @@ Abdullah has approved a full visual redesign. The UI is too complicated: too muc
 ## Design tokens (v2)
 - Background `#FDF9F4`. Cards `#FFFFFF`, radius 24px, shadow `0 1px 2px rgba(45,47,52,.06)`. Soft surfaces `#F6F7F9`. Chat bubbles `#F6F2EC`.
 - Text: `#3F434A` (body), `#2D2F34` (headings, primary buttons), `#5E646E` (muted).
-- Accent `#F67748`: the AnswerGuard mark only. Never on text, and never as a status colour.
+- Accent `#F67748`: the SureSend mark only. Never on text, and never as a status colour.
 - Font: Figtree (self-host through `next/font/google`, weights 400/500/600/700). Use JetBrains Mono only for rule IDs in the trace.
 - Buttons are pills (radius 999px): primary filled `#2D2F34`, secondary with a 1.5px `#2D2F34` outline. Height 44–50px.
 - Outcome colours (background / text): Good to send `#ECF4ED` / `#2E6B45`; Double-check `#FEF3DC` / `#6B4A00`; Hold `#FCEDEA` / `#8F2A1C`; Ask first `#F2F2FA` / `#4552B8`. Every outcome is shown as a word in a white pill tag; colour never carries the meaning alone.
@@ -40,7 +40,7 @@ Abdullah has approved a full visual redesign. The UI is too complicated: too muc
    - **Docs:** as in the Docs artboard. Rename the buttons to "Save and re-check" (primary, which is the old Save draft and keeps its weakener behaviour) and "Save and verify (simulated)".
 4. **Checking state:** three steps with progress (Reading your reply → Reading N docs → Applying the rules), as in the Checking artboard.
 5. **Sent payoff:** after a successful send that followed a held draft, show the Sent artboard's card ("<Name> got the right answer" / "The 4-day reply never reached her.", written from the real values) and the "Wrong replies stopped today" count.
-6. **The header** has only the AnswerGuard mark and name, the "Concept for Slite Agent" tag, a "Demo menu" pill and a "Guided tour" pill. The persona switch, Reset, the AI mode badge and Impact all move into the **Demo menu** popover (DemoMenu artboard). The AI mode badge goes inside the menu, under the Impact numbers, as one line.
+6. **The header** has only the SureSend mark and name, the "Concept for Slite Agent" tag, a "Demo menu" pill and a "Guided tour" pill. The persona switch, Reset, the AI mode badge and Impact all move into the **Demo menu** popover (DemoMenu artboard). The AI mode badge goes inside the menu, under the Impact numbers, as one line.
 7. **Plain-language outcome names** in the UI: ALLOW → "Good to send", CAUTION → "Double-check", HOLD → "Hold", ESCALATE → "Ask first". Engine names appear only in the Trace and Raw JSON. Headlines:
    - "Your reply is right"
    - "Right today, changing soon" or the existing reason line

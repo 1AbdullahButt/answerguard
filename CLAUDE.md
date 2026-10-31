@@ -1,4 +1,4 @@
-# AnswerGuard: rules for every agent
+# SureSend: rules for every agent
 
 Read `SPEC.md` (the contract), `IMPLEMENTATION_BRIEF.md`, `PLAN.md` and `DECISIONS.md` before working.
 If the brief and the spec disagree, the spec wins. Amendments to the spec live in `DECISIONS.md` (e.g. D-001: Groq is the AI provider).

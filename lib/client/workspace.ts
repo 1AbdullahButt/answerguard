@@ -3,7 +3,7 @@ import type { Source, SourceOverride } from "@/lib/engine/types";
 import { readJson, removeKey, writeJson } from "./storage";
 import type { OverrideRecord } from "./types";
 
-const KEY = "answerguard.overrides.v1";
+const KEY = "suresend.overrides.v1";
 
 export type OverrideMap = Record<string, OverrideRecord>;
 

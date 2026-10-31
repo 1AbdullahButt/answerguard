@@ -2,7 +2,7 @@
 description: Run the gated build loop for the current phase (builder → tester → qa → fix → repeat).
 ---
 
-Run the AnswerGuard build loop for the phase in `.loop/phase` (create it with `0` if missing). Read `CLAUDE.md`, `PLAN.md` (the phase's files and gate) and `PROGRESS.md` first.
+Run the SureSend build loop for the phase in `.loop/phase` (create it with `0` if missing). Read `CLAUDE.md`, `PLAN.md` (the phase's files and gate) and `PROGRESS.md` first.
 
 Loop:
 1. **builder** subagent: implement the phase's remaining work from PLAN.md (or fix every blocker/major item in `.loop/qa-findings.md` if it says `CHANGES_REQUIRED`).

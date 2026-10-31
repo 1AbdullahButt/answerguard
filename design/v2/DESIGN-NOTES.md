@@ -11,7 +11,7 @@ Companion to `REDESIGN_PROMPT.md` and the nine artboards in this folder. Built i
 | `--soft` | `#F6F7F9` | Soft surfaces: tabs track, conversation rows, "Not sent" card |
 | `--bubble` | `#F6F2EC` | Customer chat bubble |
 | `--text` / `--ink` / `--muted` | `#3F434A` / `#2D2F34` / `#5E646E` | Body / headings + primary buttons / secondary text |
-| `--mark` | `#F67748` | The AnswerGuard mark only, plus the in-progress arc in the Checking artboard, which uses it. Never text, never a status. |
+| `--mark` | `#F67748` | The SureSend mark only, plus the in-progress arc in the Checking artboard, which uses it. Never text, never a status. |
 | Outcomes (bg / text) | Good to send `#ECF4ED`/`#2E6B45` · Double-check `#FEF3DC`/`#6B4A00` · Hold `#FCEDEA`/`#8F2A1C` · Ask first `#F2F2FA`/`#4552B8` | Always a word in a white pill plus an icon; colour never carries the meaning alone |
 | Tags | Verified `#ECF4ED`/`#2E6B45` · Proposal `#F2F2FA`/`#4552B8` · Outdated/Edited `#FEDC9B`/`#6B4A00` (Edited uses ink text, as in the Docs artboard) | |
 
@@ -74,7 +74,7 @@ AA needs 4.5:1 for normal text and 3:1 for large text and meaningful non-text gr
 | Non-text: focus ring (ink) vs bg | `#2D2F34` on `#FDF9F4` | 12.78:1 |
 
 Notes on the non-text rows:
-- **Mark glyph (2.74:1)**: the white shield on `#F67748` is decorative (`aria-hidden`); the product name "AnswerGuard" is text next to
+- **Mark glyph (2.74:1)**: the white shield on `#F67748` is decorative (`aria-hidden`); the product name "SureSend" is text next to
   it, so WCAG 1.4.11 doesn't apply. It is exactly as specified.
 - **Composer border (1.28:1)**: `#E8E3DB` is the artboard's value. The field is also identified by its placeholder/text and the
   adjacent round Send button, and on focus the border turns ink (12.78:1). Flagged here rather than changed, because the prompt fixes

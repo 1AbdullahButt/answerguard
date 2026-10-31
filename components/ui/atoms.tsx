@@ -37,7 +37,7 @@ export function OutcomeTag({ decision, label }: { decision: OverallDecision; lab
   );
 }
 
-/** The AnswerGuard mark: the only place the accent appears. Own shield glyph, not Slite's. */
+/** The SureSend mark: the only place the accent appears. Own shield glyph, not Slite's. */
 export function Mark({ small, check = true }: { small?: boolean; check?: boolean }) {
   const size = small ? 15 : 18;
   return (

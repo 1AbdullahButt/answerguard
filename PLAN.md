@@ -1,7 +1,7 @@
-# AnswerGuard: build plan (saved as PLAN.md after approval)
+# SureSend: build plan (saved as PLAN.md after approval)
 
 ## Context
-A fresh folder (`D:\Project\slite`) holds only `SPEC.md` v2.2, `IMPLEMENTATION_BRIEF.md` and `KICKOFF_PROMPT.md`. The goal is AnswerGuard: a Next.js/TypeScript demo where live AI pulls claims out of messy docs and a pure, traced rules engine returns Allow/Caution/Hold/Escalate on a support agent's draft reply. It ships as a public Vercel URL and serves as a portfolio piece for Slite. The build is driven by a gated agent loop (subagents + Node hooks) through Phases 0–4. SPEC wins over the brief.
+A fresh folder (`D:\Project\slite`) holds only `SPEC.md` v2.2, `IMPLEMENTATION_BRIEF.md` and `KICKOFF_PROMPT.md`. The goal is SureSend: a Next.js/TypeScript demo where live AI pulls claims out of messy docs and a pure, traced rules engine returns Allow/Caution/Hold/Escalate on a support agent's draft reply. It ships as a public Vercel URL and serves as a portfolio piece for Slite. The build is driven by a gated agent loop (subagents + Node hooks) through Phases 0–4. SPEC wins over the brief.
 
 Environment checked (read-only): Node 22.23, npm 10.9, corepack 0.34, git 2.55, gh logged in as `1AbdullahButt` (scopes include `repo` and `workflow`, so CI can be pushed), Vercel CLI 65.5, ffmpeg 9 (for the demo GIF). **pnpm is not installed.** There is no `.env.local`. The repo name `answerguard` is free on GitHub.
 
@@ -42,7 +42,7 @@ The 7 rules from brief §7, plus rule 8, **no git worktrees**:
 ## 2. GitHub
 1. `git init -b main` and `.gitignore` as specified.
 2. Commit the docs (SPEC, brief, kickoff, PLAN.md, CLAUDE.md, the agent kit).
-3. `gh repo create answerguard --private --source . --push`.
+3. `gh repo create answerguard --private --source . --push` (the repo's original name; renamed `suresend` in Phase 6).
 4. **Secret gate before every commit:** run `git diff --cached` and grep for `sk-ant-`, `gho_`/`ghp_`, `UPSTASH_REDIS_REST_TOKEN=.+` and generic `(api[_-]?key|token|secret)\s*[:=]\s*\S{12,}`. A hit aborts the commit. This is wrapped in `scripts/precommit-scan.mjs`, also installed as `.git/hooks/pre-commit`.
 5. Every passed gate gets a commit and push named "Phase N: gate passed", followed by `git worktree list` evidence.
 6. CI: `.github/workflows/ci.yml` runs `pnpm test` plus the Playwright e2e with `AI_MODE=saved`.
@@ -186,3 +186,10 @@ Brief: `design/v2/REDESIGN_PROMPT.md`; artboards `design/v2/*.dc.html`; contract
 - **Gate:** typecheck, full test suite, rewritten e2e and the axe audit (1440/1024/390: 0 serious/critical, no horizontal
   scroll, AA contrast) all pass; screenshots of each v2 state at 1440 and 390 compared side by side with the artboards by QA;
   QA APPROVED; re-locked; deployed to Vercel production and smoke-tested (desktop + phone); `git worktree list` clean.
+
+## 9. Phase 6: rename to SureSend (added 2026-10-31, approved by Abdullah)
+- Rename AnswerGuard → SureSend everywhere user-facing or public (D-031); GitHub repo → `suresend`; Vercel project →
+  `suresend` with https://suresend-demo.vercel.app as production (the fallback: suresend.vercel.app stayed "assigned to
+  another project", D-032) and https://answerguard.vercel.app redirecting to it (308).
+- **Gate:** typecheck, all tests, e2e and the axe audit (1440/1024/390) pass; GIF re-recorded; deployed; live check that the
+  header says SureSend and both URLs load; QA APPROVED; `git worktree list` clean.

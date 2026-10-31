@@ -16,8 +16,8 @@ interface Limiter {
 
 function upstashLimiter(url: string, token: string): Limiter {
   const redis = new Redis({ url, token });
-  const perIp = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(perIpLimit(), "10 m"), prefix: "answerguard:ip" });
-  const global = new Ratelimit({ redis, limiter: Ratelimit.fixedWindow(dailyLimit(), "1 d"), prefix: "answerguard:global" });
+  const perIp = new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(perIpLimit(), "10 m"), prefix: "suresend:ip" });
+  const global = new Ratelimit({ redis, limiter: Ratelimit.fixedWindow(dailyLimit(), "1 d"), prefix: "suresend:global" });
   const fallback = memoryLimiter();
   return {
     kind: "upstash",

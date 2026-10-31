@@ -2,6 +2,29 @@
 // disabled storage all degrade to memory for this tab.
 const memory = new Map<string, string>();
 
+/** Keys were "answerguard.*" before the SureSend rename (D-031); returning visitors keep their workspace and metrics. */
+const LEGACY_PREFIX = { from: "answerguard.", to: "suresend." } as const;
+
+/** Copies the legacy value to `key` only when `key` has none; the legacy key is removed either way. */
+function migrateLegacy(key: string, current: string | null): string | null {
+  if (!key.startsWith(LEGACY_PREFIX.to)) return current;
+  const legacy = LEGACY_PREFIX.from + key.slice(LEGACY_PREFIX.to.length);
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(legacy);
+  } catch {
+    return current;
+  }
+  if (raw === null) return current;
+  try {
+    if (current === null) window.localStorage.setItem(key, raw);
+    window.localStorage.removeItem(legacy);
+  } catch {
+    // quota or disabled storage: the legacy key stays and the next load retries
+  }
+  return current ?? raw;
+}
+
 export function readJson<T>(key: string, fallback: T): T {
   let raw: string | null = null;
   try {
@@ -9,6 +32,7 @@ export function readJson<T>(key: string, fallback: T): T {
   } catch {
     raw = null;
   }
+  raw = migrateLegacy(key, raw);
   if (raw === null) raw = memory.get(key) ?? null;
   if (raw === null) return fallback;
   try {

@@ -163,7 +163,7 @@ function cautionSentence(result: CheckResult, claim: ClaimResult | null): string
     }
     case "EXTRACTION_GAP": {
       const hits = result.patternMatches.map((m) => `“${m.text}”`).join(", ");
-      return `AnswerGuard found a timing${hits ? ` (${hits})` : ""} but couldn't confirm it. Check it manually.`;
+      return `SureSend found a timing${hits ? ` (${hits})` : ""} but couldn't confirm it. Check it manually.`;
     }
     case "SOURCE_UNREAD": {
       const ids = result.caps.map((c) => c.sourceId).join(", ");
@@ -178,7 +178,7 @@ function cautionSentence(result: CheckResult, claim: ClaimResult | null): string
     case "HEDGED_CONTRADICTION":
       return `Your hedged “${claim?.draftClaim.valueText ?? ""}” differs from the policy (${gov ? valueWords(gov.value) : "another value"}).`;
     case "OUTSIDE_COVERAGE":
-      return `Your reply promises ${claim?.draftClaim.valueText ?? "something"} that AnswerGuard doesn't cover. Check it against the source.`;
+      return `Your reply promises ${claim?.draftClaim.valueText ?? "something"} that SureSend doesn't cover. Check it against the source.`;
     default:
       return firstUpper(result.headline.replace(/^Caution:\s*/i, ""));
   }
